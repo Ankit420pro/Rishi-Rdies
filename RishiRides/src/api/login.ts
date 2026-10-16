@@ -5,12 +5,13 @@ export type LoginResponse = {
   mobile: string;
   role: UserRole;
   maskedMobile: string;
+  developmentOtp?: string;
 };
 
 type LoginRequest = {
   mobile: string;
-  password: string;
   role: UserRole;
+  name?: string;
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
@@ -25,7 +26,7 @@ export async function loginUser(
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, name: request.name?.trim() || undefined }),
   });
 
   if (!response.ok) {

@@ -3,6 +3,11 @@ export type OtpResponse = {
   token?: string;
 };
 
+export type OtpChallengeResponse = {
+  sessionId: string;
+  developmentOtp?: string;
+};
+
 type OtpRequest = {
   sessionId: string;
   mobile: string;
@@ -34,7 +39,7 @@ export async function verifyOtp(
 export async function resendOtp(
   sessionId: string,
   mobile: string
-): Promise<void> {
+): Promise<OtpChallengeResponse> {
   if (!API_BASE_URL) {
     throw new Error('OTP delivery is unavailable because the authentication service is not configured.');
   }
@@ -48,4 +53,6 @@ export async function resendOtp(
   if (!response.ok) {
     throw new Error('Unable to resend the OTP.');
   }
+
+  return response.json() as Promise<OtpChallengeResponse>;
 }

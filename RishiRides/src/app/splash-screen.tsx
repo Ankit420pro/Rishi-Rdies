@@ -1,5 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
+import { RishiColors } from '../constants/theme';
 import {
   Animated,
   StyleSheet,
@@ -70,7 +71,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#208AEF',
+    backgroundColor: RishiColors.background,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     width: 125,
     height: 125,
     borderRadius: 38,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: RishiColors.surface,
 
     justifyContent: 'center',
     alignItems: 'center',
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   logoIcon: {
     fontSize: 72,
     fontWeight: '900',
-    color: '#208AEF',
+    color: RishiColors.mint,
     fontStyle: 'italic',
   },
 
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
     fontSize: 42,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: RishiColors.text,
     letterSpacing: -1.5,
   },
 
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     fontWeight: '600',
-    color: '#EAF6FF',
+    color: RishiColors.muted,
     letterSpacing: 1,
   },
 
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 4,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: RishiColors.mint,
     marginTop: 30,
     marginBottom: 18,
   },
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
   loading: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#D8EEFF',
+    color: RishiColors.muted,
     letterSpacing: 2,
   },
 
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
     width: 420,
     height: 420,
     borderRadius: 210,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(155,232,197,0.04)',
     top: -130,
     right: -150,
   },
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 280,
     borderRadius: 140,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(155,232,197,0.03)',
     bottom: -100,
     left: -100,
   },

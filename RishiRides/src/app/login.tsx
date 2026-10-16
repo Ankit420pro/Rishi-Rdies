@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loginUser } from '../api/login';
+import { RishiColors } from '../constants/theme';
 
 type UserRole = 'passenger' | 'driver';
 
@@ -23,8 +24,6 @@ export default function LoginScreen() {
 
   const [role, setRole] = useState<UserRole>('passenger');
   const [mobile, setMobile] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -46,20 +45,11 @@ export default function LoginScreen() {
       return;
     }
 
-    if (!password.trim()) {
-      Alert.alert(
-        'Missing Password',
-        'Please enter your password.'
-      );
-      return;
-    }
-
     try {
       setLoading(true);
 
       const response = await loginUser({
         mobile: cleanMobile,
-        password,
         role,
       });
 
@@ -69,6 +59,7 @@ export default function LoginScreen() {
           mobile: response.mobile,
           role: response.role,
           sessionId: response.sessionId,
+          developmentOtp: response.developmentOtp ?? '',
         },
       });
     } catch (error) {
@@ -99,7 +90,6 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* BACK BUTTON */}
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}
@@ -107,40 +97,33 @@ export default function LoginScreen() {
           <MaterialCommunityIcons
             name="arrow-left"
             size={24}
-            color="#0f172a"
+            color={RishiColors.text}
           />
         </Pressable>
 
-        {/* LOGO */}
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
             <MaterialCommunityIcons
               name="rickshaw"
               size={34}
-              color="#ffffff"
+              color={RishiColors.background}
             />
           </View>
-
-          <Text style={styles.logoText}>RISHI</Text>
-          <Text style={styles.logoTextGreen}>RIDES</Text>
+          <View>
+            <Text style={styles.logoText}>RishiRides</Text>
+            <Text style={styles.logoCaption}>RISHIKESH · UTTARAKHAND</Text>
+          </View>
         </View>
 
-        {/* TITLE */}
         <Text style={styles.title}>
-          Welcome Back
+          Sign in
         </Text>
 
         <Text style={styles.subtitle}>
-          Login to continue with RishiRides
-        </Text>
-
-        {/* ROLE */}
-        <Text style={styles.label}>
-          LOGIN AS
+          Enter your mobile number to continue
         </Text>
 
         <View style={styles.roleContainer}>
-          {/* PASSENGER */}
           <Pressable
             style={[
               styles.roleButton,
@@ -159,11 +142,7 @@ export default function LoginScreen() {
               <MaterialCommunityIcons
                 name="account"
                 size={24}
-                color={
-                  role === 'passenger'
-                    ? '#ffffff'
-                    : '#64748b'
-                }
+                color={role === 'passenger' ? RishiColors.background : RishiColors.muted}
               />
             </View>
 
@@ -177,16 +156,8 @@ export default function LoginScreen() {
               Passenger
             </Text>
 
-            {role === 'passenger' && (
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={21}
-                color="#16a34a"
-              />
-            )}
           </Pressable>
 
-          {/* DRIVER */}
           <Pressable
             style={[
               styles.roleButton,
@@ -205,11 +176,7 @@ export default function LoginScreen() {
               <MaterialCommunityIcons
                 name="steering"
                 size={24}
-                color={
-                  role === 'driver'
-                    ? '#ffffff'
-                    : '#64748b'
-                }
+                color={role === 'driver' ? RishiColors.background : RishiColors.muted}
               />
             </View>
 
@@ -223,17 +190,9 @@ export default function LoginScreen() {
               Driver
             </Text>
 
-            {role === 'driver' && (
-              <MaterialCommunityIcons
-                name="check-circle"
-                size={21}
-                color="#16a34a"
-              />
-            )}
           </Pressable>
         </View>
 
-        {/* MOBILE NUMBER */}
         <View style={styles.inputGroup}>
           <Text style={styles.label}>
             MOBILE NUMBER
@@ -243,13 +202,13 @@ export default function LoginScreen() {
             <MaterialCommunityIcons
               name="phone"
               size={21}
-              color="#64748b"
+              color={RishiColors.mint}
             />
 
             <TextInput
               style={styles.input}
               placeholder="Enter 10-digit mobile number"
-              placeholderTextColor="#94a3b8"
+              placeholderTextColor={RishiColors.muted}
               value={mobile}
               onChangeText={(text) => {
                 const cleaned = text
@@ -264,63 +223,6 @@ export default function LoginScreen() {
           </View>
         </View>
 
-        {/* PASSWORD */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>
-            PASSWORD
-          </Text>
-
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="lock-outline"
-              size={21}
-              color="#64748b"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              placeholderTextColor="#94a3b8"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-            />
-
-            <Pressable
-              onPress={() =>
-                setShowPassword((previous) => !previous)
-              }
-              hitSlop={10}
-            >
-              <MaterialCommunityIcons
-                name={
-                  showPassword
-                    ? 'eye-off'
-                    : 'eye'
-                }
-                size={21}
-                color="#64748b"
-              />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* FORGOT PASSWORD */}
-        <Pressable
-          style={styles.forgotButton}
-          onPress={() =>
-            Alert.alert(
-              'Forgot Password',
-              'Password recovery will be connected later.'
-            )
-          }
-        >
-          <Text style={styles.forgotText}>
-            Forgot Password?
-          </Text>
-        </Pressable>
-
-        {/* LOGIN BUTTON */}
         <Pressable
           style={[
             styles.loginButton,
@@ -332,22 +234,19 @@ export default function LoginScreen() {
         >
           <Text style={styles.loginButtonText}>
             {loading
-              ? 'LOGGING IN...'
-              : role === 'passenger'
-                ? 'LOGIN AS PASSENGER'
-                : 'LOGIN AS DRIVER'}
+              ? 'SENDING CODE...'
+              : 'CONTINUE WITH PHONE'}
           </Text>
 
           {!loading && (
             <MaterialCommunityIcons
               name="arrow-right"
               size={22}
-              color="#ffffff"
+              color={RishiColors.background}
             />
           )}
         </Pressable>
 
-        {/* SIGN UP */}
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>
             Don't have an account?
@@ -362,12 +261,11 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        {/* SECURITY */}
         <View style={styles.infoBox}>
           <MaterialCommunityIcons
             name="shield-check"
             size={22}
-            color="#16a34a"
+            color={RishiColors.mint}
           />
 
           <Text style={styles.infoText}>
@@ -382,135 +280,137 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: RishiColors.background,
   },
 
   scrollContent: {
-    paddingHorizontal: 22,
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    paddingHorizontal: 24,
   },
 
   backButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    backgroundColor: RishiColors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 25,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: RishiColors.line,
   },
 
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 25,
+    justifyContent: 'flex-start',
+    marginBottom: 54,
   },
 
   logoCircle: {
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#16a34a',
+    backgroundColor: RishiColors.mint,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 13,
   },
 
   logoText: {
-    fontSize: 28,
+    fontSize: 19,
     fontWeight: '900',
-    color: '#0f172a',
-    letterSpacing: 1,
+    color: RishiColors.text,
   },
 
-  logoTextGreen: {
-    fontSize: 28,
-    fontWeight: '900',
-    color: '#16a34a',
+  logoCaption: {
+    color: RishiColors.muted,
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: 3,
     letterSpacing: 1,
   },
 
   title: {
-    fontSize: 30,
-    fontWeight: '900',
-    color: '#0f172a',
-    textAlign: 'center',
+    fontSize: 32,
+    fontWeight: '800',
+    color: RishiColors.text,
   },
 
   subtitle: {
     fontSize: 14,
-    color: '#64748b',
-    textAlign: 'center',
-    marginTop: 7,
+    color: RishiColors.muted,
+    marginTop: 8,
     marginBottom: 30,
   },
 
   label: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#475569',
+    color: RishiColors.muted,
     letterSpacing: 0.8,
     marginBottom: 8,
   },
 
   roleContainer: {
+    flexDirection: 'row',
     gap: 10,
-    marginBottom: 25,
+    padding: 5,
+    borderRadius: 14,
+    backgroundColor: RishiColors.surface,
+    marginBottom: 28,
   },
 
   roleButton: {
-    minHeight: 68,
-    borderRadius: 15,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 10,
+    backgroundColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    justifyContent: 'center',
+    gap: 7,
   },
 
   roleButtonActive: {
-    borderColor: '#16a34a',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: RishiColors.mint,
   },
 
   roleIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f1f5f9',
+    width: 27,
+    height: 27,
+    borderRadius: 14,
+    backgroundColor: RishiColors.surfaceRaised,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
 
   roleIconActive: {
-    backgroundColor: '#16a34a',
+    backgroundColor: 'rgba(7, 23, 19, 0.12)',
   },
 
   roleText: {
-    flex: 1,
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
+    color: RishiColors.muted,
   },
 
   roleTextActive: {
-    color: '#15803d',
+    color: RishiColors.background,
   },
 
   inputGroup: {
-    marginBottom: 18,
+    marginBottom: 22,
   },
 
   inputContainer: {
-    height: 56,
-    backgroundColor: '#ffffff',
-    borderRadius: 13,
+    height: 58,
+    backgroundColor: RishiColors.surfaceInput,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: RishiColors.line,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
@@ -519,25 +419,14 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
-    color: '#0f172a',
+    color: RishiColors.text,
     marginLeft: 10,
-  },
-
-  forgotButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 25,
-  },
-
-  forgotText: {
-    color: '#16a34a',
-    fontSize: 13,
-    fontWeight: '700',
   },
 
   loginButton: {
     height: 56,
-    borderRadius: 14,
-    backgroundColor: '#16a34a',
+    borderRadius: 12,
+    backgroundColor: RishiColors.mint,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -550,7 +439,7 @@ const styles = StyleSheet.create({
   },
 
   loginButtonText: {
-    color: '#ffffff',
+    color: RishiColors.background,
     fontSize: 14,
     fontWeight: '900',
     letterSpacing: 0.5,
@@ -564,12 +453,12 @@ const styles = StyleSheet.create({
   },
 
   signupText: {
-    color: '#64748b',
+    color: RishiColors.muted,
     fontSize: 14,
   },
 
   signupLink: {
-    color: '#16a34a',
+    color: RishiColors.mint,
     fontSize: 14,
     fontWeight: '800',
   },
@@ -578,12 +467,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30,
+    marginTop: 28,
     paddingHorizontal: 15,
   },
 
   infoText: {
-    color: '#64748b',
+    color: RishiColors.muted,
     fontSize: 11,
     marginLeft: 7,
   },

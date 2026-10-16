@@ -7,20 +7,33 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+export const RishiColors = {
+  background: '#071713',
+  surface: '#10251E',
+  surfaceRaised: '#18372E',
+  surfaceInput: '#1C4036',
+  line: '#315448',
+  mint: '#9BE8C5',
+  text: '#F2F7F3',
+  muted: '#A8BDB3',
+  warning: '#E9C47B',
+  danger: '#F07E7E',
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: RishiColors.text,
+    background: RishiColors.background,
+    backgroundElement: RishiColors.surface,
+    backgroundSelected: RishiColors.surfaceRaised,
+    textSecondary: RishiColors.muted,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: RishiColors.text,
+    background: RishiColors.background,
+    backgroundElement: RishiColors.surface,
+    backgroundSelected: RishiColors.surfaceRaised,
+    textSecondary: RishiColors.muted,
   },
 } as const;
 

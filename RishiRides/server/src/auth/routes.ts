@@ -10,7 +10,11 @@ export const authRouter = Router();
 
 const requestLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
 const phoneSchema = z.string().regex(/^[0-9]{10}$/, 'Enter a valid 10-digit Indian mobile number.');
-const loginSchema = z.object({ mobile: phoneSchema, role: z.enum(['passenger', 'driver']) });
+const loginSchema = z.object({
+  mobile: phoneSchema,
+  role: z.enum(['passenger', 'driver']),
+  name: z.string().trim().min(1).max(120).optional(),
+});
 const verifySchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema, otp: z.string().regex(/^[0-9]{6}$/) });
 const resendSchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema });
 
@@ -41,7 +45,7 @@ authRouter.post('/login', requestLimit, async (request, response, next) => {
     const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
     const user = await prisma.user.upsert({
       where: { phone: parsed.data.mobile },
-      create: { phone: parsed.data.mobile, role },
+      create: { phone: parsed.data.mobile, role, name: parsed.data.name },
       update: {},
       select: { id: true, phone: true, role: true },
     });

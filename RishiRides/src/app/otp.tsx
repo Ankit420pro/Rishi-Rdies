@@ -15,17 +15,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '../api/login';
 import { resendOtp, verifyOtp } from '../api/otp';
 import { saveAuthSession } from '../api/auth-session';
+import { RishiColors } from '../constants/theme';
 
 export default function OtpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mobile, role, sessionId } = useLocalSearchParams<{
+  const { mobile, role, sessionId, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
     mobile: string;
     role: UserRole;
     sessionId: string;
+    developmentOtp?: string;
   }>();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [challengeId, setChallengeId] = useState(sessionId ?? '');
+  const [developmentOtp, setDevelopmentOtp] = useState(initialDevelopmentOtp ?? '');
 
   const handleVerify = async () => {
     if (otp.length !== 6) {
@@ -36,7 +41,7 @@ export default function OtpScreen() {
     try {
       setLoading(true);
       const result = await verifyOtp({
-        sessionId: sessionId ?? '',
+        sessionId: challengeId,
         mobile: mobile ?? '',
         otp,
       });
@@ -63,13 +68,19 @@ export default function OtpScreen() {
 
   const handleResend = async () => {
     try {
-      await resendOtp(sessionId ?? '', mobile ?? '');
+      setResending(true);
+      const challenge = await resendOtp(challengeId, mobile ?? '');
+      setChallengeId(challenge.sessionId);
+      setDevelopmentOtp(challenge.developmentOtp ?? '');
+      setOtp('');
       Alert.alert('OTP sent', 'A new OTP has been sent to your mobile number.');
     } catch (error) {
       Alert.alert(
         'Unable to resend',
         error instanceof Error ? error.message : 'Please try again.'
       );
+    } finally {
+      setResending(false);
     }
   };
 
@@ -85,16 +96,23 @@ export default function OtpScreen() {
         ]}
       >
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#0f172a" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={RishiColors.text} />
         </Pressable>
 
         <View style={styles.logoCircle}>
-          <MaterialCommunityIcons name="shield-check" size={34} color="#fff" />
+          <MaterialCommunityIcons name="shield-check" size={34} color={RishiColors.background} />
         </View>
         <Text style={styles.title}>Verify your number</Text>
         <Text style={styles.subtitle}>
           Enter the 6-digit OTP sent to {mobile ? `******${mobile.slice(-4)}` : 'your mobile'}.
         </Text>
+
+        {developmentOtp.length === 6 && (
+          <View style={styles.developmentCode}>
+            <MaterialCommunityIcons name="flask-outline" size={17} color={RishiColors.warning} />
+            <Text style={styles.developmentCodeText}>Development OTP: {developmentOtp}</Text>
+          </View>
+        )}
 
         <Text style={styles.label}>OTP</Text>
         <TextInput
@@ -104,7 +122,7 @@ export default function OtpScreen() {
           keyboardType="number-pad"
           maxLength={6}
           placeholder="000000"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={RishiColors.muted}
           textContentType="oneTimeCode"
           autoFocus
         />
@@ -118,12 +136,12 @@ export default function OtpScreen() {
             {loading ? 'VERIFYING...' : 'VERIFY OTP'}
           </Text>
           {!loading && (
-            <MaterialCommunityIcons name="arrow-right" size={22} color="#fff" />
+            <MaterialCommunityIcons name="arrow-right" size={22} color={RishiColors.background} />
           )}
         </Pressable>
 
-        <Pressable onPress={handleResend}>
-          <Text style={styles.resendText}>Resend OTP</Text>
+        <Pressable onPress={handleResend} disabled={resending}>
+          <Text style={[styles.resendText, resending && styles.disabledButton]}>{resending ? 'SENDING...' : 'Resend OTP'}</Text>
         </Pressable>
 
       </View>
@@ -132,39 +150,39 @@ export default function OtpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  content: { flex: 1, paddingHorizontal: 22 },
+  container: { flex: 1, backgroundColor: RishiColors.background },
+  content: { flex: 1, width: '100%', maxWidth: 480, alignSelf: 'center', paddingHorizontal: 24 },
   backButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fff',
+    borderRadius: 14,
+    backgroundColor: RishiColors.surface,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 70,
+    marginBottom: 58,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: RishiColors.line,
   },
   logoCircle: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#16a34a',
+    backgroundColor: RishiColors.mint,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 25,
   },
-  title: { fontSize: 29, fontWeight: '900', color: '#0f172a', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#64748b', textAlign: 'center', marginTop: 9, marginBottom: 38 },
-  label: { fontSize: 11, fontWeight: '800', color: '#475569', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 29, fontWeight: '800', color: RishiColors.text, textAlign: 'left' },
+  subtitle: { fontSize: 14, lineHeight: 21, color: RishiColors.muted, textAlign: 'left', marginTop: 9, marginBottom: 38 },
+  label: { fontSize: 11, fontWeight: '800', color: RishiColors.muted, letterSpacing: 0.8, marginBottom: 8 },
   otpInput: {
     height: 64,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#16a34a',
-    backgroundColor: '#fff',
-    color: '#0f172a',
+    borderColor: RishiColors.line,
+    backgroundColor: RishiColors.surfaceInput,
+    color: RishiColors.text,
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: 10,
@@ -174,7 +192,7 @@ const styles = StyleSheet.create({
   verifyButton: {
     height: 58,
     borderRadius: 14,
-    backgroundColor: '#16a34a',
+    backgroundColor: RishiColors.mint,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -182,6 +200,8 @@ const styles = StyleSheet.create({
     marginTop: 25,
   },
   disabledButton: { opacity: 0.65 },
-  verifyText: { color: '#fff', fontSize: 15, fontWeight: '900' },
-  resendText: { color: '#15803d', fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 25 },
+  verifyText: { color: RishiColors.background, fontSize: 15, fontWeight: '900' },
+  resendText: { color: RishiColors.mint, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 25 },
+  developmentCode: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: RishiColors.line, backgroundColor: RishiColors.surface, borderRadius: 10, marginBottom: 22, paddingHorizontal: 12 },
+  developmentCodeText: { color: RishiColors.warning, fontSize: 12, fontWeight: '700' },
 });

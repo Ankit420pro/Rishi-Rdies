@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { clearAuthSession } from '../../../api/auth-session';
+import { RishiColors } from '../../../constants/theme';
 
 const serviceConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
 
@@ -121,7 +122,7 @@ function WorkspaceAction({ icon, label, onPress }: { icon: keyof typeof Material
   );
 }
 
-const colors = { ink: '#081313', background: '#0b1718', panel: '#122223', elevated: '#1a2d2e', line: '#294142', text: '#f3f5ed', muted: '#9aadaa', mint: '#9de4c1', amber: '#e9b769' };
+const colors = { ink: RishiColors.background, background: RishiColors.background, panel: RishiColors.surface, elevated: RishiColors.surfaceRaised, line: RishiColors.line, text: RishiColors.text, muted: RishiColors.muted, mint: RishiColors.mint, amber: RishiColors.warning };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },

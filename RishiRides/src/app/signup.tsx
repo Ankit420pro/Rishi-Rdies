@@ -13,6 +13,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { loginUser } from '../api/login';
+import { RishiColors } from '../constants/theme';
 
 type UserRole = 'passenger' | 'driver';
 
@@ -24,33 +26,19 @@ export default function SignupScreen() {
 
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
-  const [LicenceNumber, setLicenceNumber] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] =
-    useState('');
+  const [loading, setLoading] = useState(false);
 
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [showConfirm, setShowConfirm] =
-    useState(false);
-
-  const handleSignup = () => {
-    if (
-      !name ||
-      !mobile ||
-      !password ||
-      !confirmPassword ||
-      (role === 'driver' && !LicenceNumber)
-    ) {
+  const handleSignup = async () => {
+    const cleanMobile = mobile.replace(/\D/g, '');
+    if (!name.trim() || !cleanMobile) {
       Alert.alert(
         'Missing details',
-        'Please fill in all fields.'
+        'Enter your name and mobile number to continue.'
       );
       return;
     }
 
-    if (mobile.length !== 10) {
+    if (cleanMobile.length !== 10) {
       Alert.alert(
         'Invalid mobile',
         'Please enter a valid 10 digit mobile number.'
@@ -58,18 +46,30 @@ export default function SignupScreen() {
       return;
     }
 
-    if (password !== confirmPassword) {
+    try {
+      setLoading(true);
+      const response = await loginUser({
+        mobile: cleanMobile,
+        role,
+        name: name.trim(),
+      });
+      router.push({
+        pathname: '/otp',
+        params: {
+          mobile: response.mobile,
+          role: response.role,
+          sessionId: response.sessionId,
+          developmentOtp: response.developmentOtp ?? '',
+        },
+      });
+    } catch (error) {
       Alert.alert(
-        'Password mismatch',
-        'Passwords do not match.'
+        'Unable to start verification',
+        error instanceof Error ? error.message : 'Please try again.'
       );
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    Alert.alert(
-      'Sign-up unavailable',
-      'Account creation is not connected to a secure authentication service. No account has been created.'
-    );
   };
 
   return (
@@ -96,7 +96,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={23}
-              color="#222"
+              color={RishiColors.text}
             />
           </Pressable>
 
@@ -106,7 +106,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="rickshaw"
               size={34}
-              color="#fff"
+              color={RishiColors.background}
             />
           </View>
 
@@ -154,8 +154,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'passenger'
-                      ? '#fff'
-                      : '#18a565'
+                      ? RishiColors.background
+                      : RishiColors.mint
                   }
                 />
               </View>
@@ -174,7 +174,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-                  color="#fff"
+                  color={RishiColors.background}
                   style={styles.check}
                 />
               )}
@@ -204,8 +204,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'driver'
-                      ? '#fff'
-                      : '#18a565'
+                      ? RishiColors.background
+                      : RishiColors.mint
                   }
                 />
               </View>
@@ -224,7 +224,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-                  color="#fff"
+                  color={RishiColors.background}
                   style={styles.check}
                 />
               )}
@@ -251,105 +251,16 @@ export default function SignupScreen() {
             maxLength={10}
           />
 
-          {/* Licence Number */}
-
-          <Input
-            icon="card-account-details-outline"
-            placeholder="Licence Number"
-            value={LicenceNumber}
-            onChangeText={setLicenceNumber}
-            keyboardType="numeric"
-          />
-
-          {/* PASSWORD */}
-
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="lock"
-              size={21}
-              color="#18a565"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor="#999"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <Pressable
-              onPress={() =>
-                setShowPassword(!showPassword)
-              }
-            >
-              <MaterialCommunityIcons
-                name={
-                  showPassword
-                    ? 'eye-off'
-                    : 'eye'
-                }
-                size={21}
-                color="#777"
-              />
-            </Pressable>
-          </View>
-
-          {/* CONFIRM */}
-
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="lock-check"
-              size={21}
-              color="#18a565"
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
-              placeholderTextColor="#999"
-              secureTextEntry={!showConfirm}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-
-            <Pressable
-              onPress={() =>
-                setShowConfirm(!showConfirm)
-              }
-            >
-              <MaterialCommunityIcons
-                name={
-                  showConfirm
-                    ? 'eye-off'
-                    : 'eye'
-                }
-                size={21}
-                color="#777"
-              />
-            </Pressable>
-          </View>
-
-          {/* SIGNUP */}
-
           <Pressable
-            style={styles.signupButton}
+            style={[styles.signupButton, loading && styles.disabledButton]}
             onPress={handleSignup}
+            disabled={loading}
           >
             <Text style={styles.signupButtonText}>
-              CREATE{' '}
-              {role === 'passenger'
-                ? 'PASSENGER'
-                : 'DRIVER'}{' '}
-              ACCOUNT
+              {loading ? 'SENDING CODE...' : 'CONTINUE WITH PHONE'}
             </Text>
 
-            <MaterialCommunityIcons
-              name="arrow-right"
-              size={20}
-              color="#fff"
-            />
+            {!loading && <MaterialCommunityIcons name="arrow-right" size={20} color={RishiColors.background} />}
           </Pressable>
 
           {/* LOGIN */}
@@ -398,13 +309,13 @@ function Input({
       <MaterialCommunityIcons
         name={icon}
         size={21}
-        color="#18a565"
+        color={RishiColors.mint}
       />
 
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor={RishiColors.muted}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -418,19 +329,21 @@ function Input({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f7f6',
+    backgroundColor: RishiColors.background,
   },
 
   scroll: {
     flexGrow: 1,
-    paddingVertical: 30,
+    paddingTop: 30,
+    paddingBottom: 40,
   },
 
   content: {
-    width: '90%',
-    maxWidth: 430,
+    width: '100%',
+    maxWidth: 480,
     alignSelf: 'center',
-    paddingTop: 40,
+    paddingTop: 56,
+    paddingHorizontal: 24,
   },
 
   backButton: {
@@ -439,25 +352,26 @@ const styles = StyleSheet.create({
     left: 0,
     width: 45,
     height: 45,
-    borderRadius: 23,
-    backgroundColor: '#fff',
+    borderRadius: 14,
+    backgroundColor: RishiColors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: RishiColors.line,
   },
 
   logoCircle: {
     width: 65,
     height: 65,
     borderRadius: 33,
-    backgroundColor: '#18a565',
+    backgroundColor: RishiColors.mint,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   logoText: {
-    color: '#18a565',
+    color: RishiColors.mint,
     fontSize: 17,
     fontWeight: '900',
     letterSpacing: 2,
@@ -466,15 +380,15 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    color: '#222',
+    color: RishiColors.text,
     fontSize: 29,
     fontWeight: '900',
-    textAlign: 'center',
+    textAlign: 'left',
     marginTop: 25,
   },
 
   subtitle: {
-    color: '#777',
+    color: RishiColors.muted,
     fontSize: 13,
     textAlign: 'center',
     marginTop: 7,
@@ -482,7 +396,7 @@ const styles = StyleSheet.create({
   },
 
   roleLabel: {
-    color: '#777',
+    color: RishiColors.muted,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1,
@@ -498,24 +412,24 @@ const styles = StyleSheet.create({
   roleButton: {
     flex: 1,
     height: 70,
-    backgroundColor: '#fff',
+    backgroundColor: RishiColors.surface,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#e1e1e1',
+    borderColor: RishiColors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   roleButtonActive: {
-    backgroundColor: '#18a565',
-    borderColor: '#18a565',
+    backgroundColor: RishiColors.mint,
+    borderColor: RishiColors.mint,
   },
 
   roleIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#e8f7f0',
+    backgroundColor: RishiColors.surfaceRaised,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -525,14 +439,14 @@ const styles = StyleSheet.create({
   },
 
   roleText: {
-    color: '#444',
+    color: RishiColors.muted,
     fontSize: 9,
     fontWeight: '900',
     marginTop: 4,
   },
 
   roleTextActive: {
-    color: '#fff',
+    color: RishiColors.background,
   },
 
   check: {
@@ -543,10 +457,10 @@ const styles = StyleSheet.create({
 
   inputContainer: {
     height: 55,
-    backgroundColor: '#fff',
+    backgroundColor: RishiColors.surfaceInput,
     borderRadius: 11,
     borderWidth: 1,
-    borderColor: '#e3e3e3',
+    borderColor: RishiColors.line,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -556,7 +470,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     height: '100%',
-    color: '#222',
+    color: RishiColors.text,
     fontSize: 14,
     marginLeft: 10,
   },
@@ -564,7 +478,7 @@ const styles = StyleSheet.create({
   signupButton: {
     height: 55,
     borderRadius: 11,
-    backgroundColor: '#18a565',
+    backgroundColor: RishiColors.mint,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -573,7 +487,7 @@ const styles = StyleSheet.create({
   },
 
   signupButtonText: {
-    color: '#fff',
+    color: RishiColors.background,
     fontSize: 11,
     fontWeight: '900',
   },
@@ -585,13 +499,14 @@ const styles = StyleSheet.create({
   },
 
   loginText: {
-    color: '#777',
+    color: RishiColors.muted,
     fontSize: 13,
   },
 
   loginLink: {
-    color: '#18a565',
+    color: RishiColors.mint,
     fontSize: 13,
     fontWeight: '900',
   },
+  disabledButton: { opacity: 0.6 },
 });
