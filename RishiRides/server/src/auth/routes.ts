@@ -1,0 +1,119 @@
+import { Router } from 'express';
+import { rateLimit } from 'express-rate-limit';
+import jwt from 'jsonwebtoken';
+import { z } from 'zod';
+import { config } from '../config';
+import { prisma } from '../db';
+import { createOtp, hashOtp, isOtpUsable, otpMatches, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from './otp';
+
+export const authRouter = Router();
+
+const requestLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false });
+const phoneSchema = z.string().regex(/^[0-9]{10}$/, 'Enter a valid 10-digit Indian mobile number.');
+const loginSchema = z.object({ mobile: phoneSchema, role: z.enum(['passenger', 'driver']) });
+const verifySchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema, otp: z.string().regex(/^[0-9]{6}$/) });
+const resendSchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema });
+
+async function issueOtp(userId: string) {
+  const code = createOtp();
+  const challenge = await prisma.$transaction(async (transaction) => {
+    await transaction.otpChallenge.updateMany({ where: { userId, consumedAt: null }, data: { consumedAt: new Date() } });
+    return transaction.otpChallenge.create({
+      data: { userId, codeHash: hashOtp(code), expiresAt: new Date(Date.now() + OTP_TTL_MS) },
+      select: { id: true },
+    });
+  });
+
+  if (config.developmentOtpEnabled) {
+    console.info(`[DEV OTP] challenge=${challenge.id} code=${code}`);
+    return { developmentOtp: code };
+  }
+
+  throw new Error('OTP delivery is not configured. No message was sent.');
+}
+
+authRouter.post('/login', requestLimit, async (request, response, next) => {
+  const parsed = loginSchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter a valid mobile number and account type.' } });
+  if (!config.developmentOtpEnabled) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
+
+  try {
+    const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
+    const user = await prisma.user.upsert({
+      where: { phone: parsed.data.mobile },
+      create: { phone: parsed.data.mobile, role },
+      update: {},
+      select: { id: true, phone: true, role: true },
+    });
+    if (user.role !== role) return response.status(409).json({ error: { code: 'ROLE_MISMATCH', message: 'This number is registered for a different account type.' } });
+
+    const { developmentOtp } = await issueOtp(user.id);
+    return response.status(202).json({
+      sessionId: (await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } })).id,
+      mobile: user.phone,
+      role: parsed.data.role,
+      maskedMobile: `******${user.phone.slice(-4)}`,
+      ...(developmentOtp ? { developmentOtp } : {}),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+authRouter.post('/resend-otp', requestLimit, async (request, response, next) => {
+  const parsed = resendSchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'The verification session is invalid.' } });
+  if (!config.developmentOtpEnabled) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
+
+  try {
+    const user = await prisma.user.findFirst({ where: { phone: parsed.data.mobile, challenges: { some: { id: parsed.data.sessionId } } }, select: { id: true } });
+    if (!user) return response.status(404).json({ error: { code: 'SESSION_NOT_FOUND', message: 'The verification session was not found.' } });
+    const result = await issueOtp(user.id);
+    const challenge = await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+    return response.json({ sessionId: challenge.id, ...(result.developmentOtp ? { developmentOtp: result.developmentOtp } : {}) });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+authRouter.post('/verify-otp', requestLimit, async (request, response, next) => {
+  const parsed = verifySchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter the six-digit code for this session.' } });
+
+  try {
+    const result = await prisma.$transaction(async (transaction) => {
+      const challenge = await transaction.otpChallenge.findFirst({
+        where: { id: parsed.data.sessionId, user: { phone: parsed.data.mobile } },
+        include: { user: true },
+      });
+      if (!challenge || !isOtpUsable(challenge)) return { kind: 'invalid' as const };
+
+      if (!otpMatches(parsed.data.otp, challenge.codeHash)) {
+        await transaction.otpChallenge.updateMany({
+          where: { id: challenge.id, attempts: challenge.attempts, consumedAt: null, expiresAt: { gt: new Date() } },
+          data: { attempts: { increment: 1 } },
+        });
+        return { kind: 'invalid' as const };
+      }
+
+      const consumed = await transaction.otpChallenge.updateMany({
+        where: { id: challenge.id, attempts: { lt: OTP_MAX_ATTEMPTS }, consumedAt: null, expiresAt: { gt: new Date() } },
+        data: { consumedAt: new Date() },
+      });
+      if (consumed.count !== 1) return { kind: 'invalid' as const };
+
+      const user = await transaction.user.update({
+        where: { id: challenge.userId },
+        data: { status: 'ACTIVE' },
+        select: { id: true, role: true, status: true },
+      });
+      return { kind: 'verified' as const, user };
+    }, { isolationLevel: 'Serializable' });
+
+    if (result.kind !== 'verified') return response.status(401).json({ error: { code: 'OTP_INVALID', message: 'The code is incorrect, expired, or already used.' } });
+    const token = jwt.sign({ role: result.user.role }, config.JWT_SECRET, { subject: result.user.id, expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] });
+    return response.json({ verified: true, token });
+  } catch (error) {
+    return next(error);
+  }
+});

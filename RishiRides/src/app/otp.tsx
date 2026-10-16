@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -15,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '../api/login';
 import { resendOtp, verifyOtp } from '../api/otp';
+import { saveAuthSession } from '../api/auth-session';
 
 export default function OtpScreen() {
   const router = useRouter();
@@ -41,18 +41,11 @@ export default function OtpScreen() {
         otp,
       });
 
-      if (!result.verified || !role) {
-        throw new Error('OTP verification failed.');
+      if (!result.verified || !result.token?.trim() || !role || !mobile) {
+        throw new Error('Verification did not return a valid authenticated session.');
       }
 
-      await AsyncStorage.multiSet([
-        ['isLoggedIn', 'true'],
-        ['userRole', role],
-        ['userMobile', mobile ?? ''],
-        ...(result.token
-          ? ([['authToken', result.token]] as [string, string][])
-          : []),
-      ]);
+      await saveAuthSession({ role, mobile, token: result.token });
       router.replace(
         role === 'driver'
           ? '/dashboards/Drivers/driver-dashboard'

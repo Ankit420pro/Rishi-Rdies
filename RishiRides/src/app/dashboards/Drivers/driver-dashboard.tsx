@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { clearAuthSession } from '../../../api/auth-session';
 
 const serviceConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
 
@@ -23,6 +24,11 @@ export default function DriverDashboard() {
 
   const unavailable = (feature: string) => {
     Alert.alert(feature + ' unavailable', 'This feature needs the secure RishiRide service, which is not configured in this build.');
+  };
+
+  const signOut = async () => {
+    await clearAuthSession();
+    router.replace('/login');
   };
 
   return (
@@ -91,7 +97,7 @@ export default function DriverDashboard() {
           <WorkspaceAction icon="file-document-outline" label="Registration and verification" onPress={() => unavailable('Driver registration')} />
         </View>
 
-        <Pressable accessibilityRole="button" style={styles.signOut} onPress={() => router.replace('/login')}>
+        <Pressable accessibilityRole="button" style={styles.signOut} onPress={signOut}>
           <MaterialCommunityIcons name="logout" size={18} color={colors.muted} />
           <Text style={styles.signOutText}>Sign in with another account</Text>
         </Pressable>
