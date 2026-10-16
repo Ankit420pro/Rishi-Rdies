@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { RideColors } from '../constants/theme';
 
 export default function SplashScreen() {
   const scale = useRef(new Animated.Value(0.7)).current;
@@ -70,7 +71,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#208AEF',
+    backgroundColor: RideColors.background,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -85,12 +86,12 @@ const styles = StyleSheet.create({
     width: 125,
     height: 125,
     borderRadius: 38,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: RideColors.surface,
 
     justifyContent: 'center',
     alignItems: 'center',
 
-    shadowColor: '#003B70',
+    shadowColor: '#000000',
     shadowOffset: {
       width: 0,
       height: 15,
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
   logoIcon: {
     fontSize: 72,
     fontWeight: '900',
-    color: '#208AEF',
+    color: RideColors.accentStrong,
     fontStyle: 'italic',
   },
 
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
     fontSize: 42,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: RideColors.text,
     letterSpacing: -1.5,
   },
 
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     fontWeight: '600',
-    color: '#EAF6FF',
+    color: RideColors.textMuted,
     letterSpacing: 1,
   },
 
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 4,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: RideColors.accent,
     marginTop: 30,
     marginBottom: 18,
   },

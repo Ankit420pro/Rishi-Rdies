@@ -1,7 +1,6 @@
-export type OtpResponse = {
-  verified: boolean;
-  token?: string;
-};
+export type OtpResponse =
+  | { verified: false; token?: string }
+  | { verified: true; token: string };
 
 type OtpRequest = {
   sessionId: string;
@@ -28,7 +27,33 @@ export async function verifyOtp(
     throw new Error('The OTP is incorrect or has expired.');
   }
 
-  return response.json() as Promise<OtpResponse>;
+  const payload: unknown = await response.json();
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('verified' in payload)
+  ) {
+    throw new Error('The authentication service returned an invalid verification response.');
+  }
+
+  const verified = payload.verified;
+  const token = 'token' in payload ? payload.token : undefined;
+  if (
+    typeof verified !== 'boolean' ||
+    (token !== undefined && typeof token !== 'string')
+  ) {
+    throw new Error('The authentication service returned an invalid verification response.');
+  }
+
+  if (verified) {
+    if (typeof token !== 'string' || !token) {
+      throw new Error('The authentication service returned an invalid verification response.');
+    }
+    return { verified: true, token };
+  }
+  return typeof token === 'string'
+    ? { verified: false, token }
+    : { verified: false };
 }
 
 export async function resendOtp(

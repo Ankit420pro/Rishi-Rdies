@@ -7,20 +7,33 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+export const RideColors = {
+  background: '#071713',
+  surface: '#10251E',
+  surfaceRaised: '#18352A',
+  border: '#29473A',
+  text: '#F3F5ED',
+  textMuted: '#A9B9B0',
+  accent: '#9BE8C5',
+  accentStrong: '#52C891',
+  warning: '#E9B769',
+  critical: '#F87171',
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: RideColors.text,
+    background: RideColors.background,
+    backgroundElement: RideColors.surface,
+    backgroundSelected: RideColors.surfaceRaised,
+    textSecondary: RideColors.textMuted,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: RideColors.text,
+    background: RideColors.background,
+    backgroundElement: RideColors.surface,
+    backgroundSelected: RideColors.surfaceRaised,
+    textSecondary: RideColors.textMuted,
   },
 } as const;
 

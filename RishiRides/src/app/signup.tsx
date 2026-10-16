@@ -1,6 +1,6 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -13,14 +13,17 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { RideColors } from '../constants/theme';
 
 type UserRole = 'passenger' | 'driver';
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { role: requestedRole } = useLocalSearchParams<{ role?: UserRole }>();
 
-  const [role, setRole] =
-    useState<UserRole>('passenger');
+  const [role, setRole] = useState<UserRole>(
+    requestedRole === 'driver' ? 'driver' : 'passenger'
+  );
 
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -96,7 +99,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={23}
-              color="#222"
+              color={RideColors.text}
             />
           </Pressable>
 
@@ -106,7 +109,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="rickshaw"
               size={34}
-              color="#fff"
+              color={RideColors.background}
             />
           </View>
 
@@ -154,8 +157,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'passenger'
-                      ? '#fff'
-                      : '#18a565'
+                      ? RideColors.background
+                      : RideColors.accent
                   }
                 />
               </View>
@@ -174,7 +177,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-                  color="#fff"
+                  color={RideColors.accent}
                   style={styles.check}
                 />
               )}
@@ -204,8 +207,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'driver'
-                      ? '#fff'
-                      : '#18a565'
+                      ? RideColors.background
+                      : RideColors.accent
                   }
                 />
               </View>
@@ -224,7 +227,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-                  color="#fff"
+                  color={RideColors.accent}
                   style={styles.check}
                 />
               )}
@@ -267,13 +270,13 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="lock"
               size={21}
-              color="#18a565"
+              color={RideColors.accent}
             />
 
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor="#999"
+              placeholderTextColor={RideColors.textMuted}
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={setPassword}
@@ -291,7 +294,7 @@ export default function SignupScreen() {
                     : 'eye'
                 }
                 size={21}
-                color="#777"
+                color={RideColors.textMuted}
               />
             </Pressable>
           </View>
@@ -302,13 +305,13 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="lock-check"
               size={21}
-              color="#18a565"
+              color={RideColors.accent}
             />
 
             <TextInput
               style={styles.input}
               placeholder="Confirm password"
-              placeholderTextColor="#999"
+              placeholderTextColor={RideColors.textMuted}
               secureTextEntry={!showConfirm}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
@@ -326,7 +329,7 @@ export default function SignupScreen() {
                     : 'eye'
                 }
                 size={21}
-                color="#777"
+                color={RideColors.textMuted}
               />
             </Pressable>
           </View>
@@ -348,7 +351,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="arrow-right"
               size={20}
-              color="#fff"
+              color={RideColors.background}
             />
           </Pressable>
 
@@ -361,7 +364,7 @@ export default function SignupScreen() {
 
             <Pressable
               onPress={() =>
-                router.push('/login')
+                router.push({ pathname: '/login', params: { role } })
               }
             >
               <Text style={styles.loginLink}>
@@ -398,13 +401,13 @@ function Input({
       <MaterialCommunityIcons
         name={icon}
         size={21}
-        color="#18a565"
+        color={RideColors.accent}
       />
 
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-        placeholderTextColor="#999"
+        placeholderTextColor={RideColors.textMuted}
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
@@ -416,182 +419,28 @@ function Input({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f7f6',
-  },
-
-  scroll: {
-    flexGrow: 1,
-    paddingVertical: 30,
-  },
-
-  content: {
-    width: '90%',
-    maxWidth: 430,
-    alignSelf: 'center',
-    paddingTop: 40,
-  },
-
-  backButton: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 45,
-    height: 45,
-    borderRadius: 23,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 3,
-  },
-
-  logoCircle: {
-    width: 65,
-    height: 65,
-    borderRadius: 33,
-    backgroundColor: '#18a565',
-    alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  logoText: {
-    color: '#18a565',
-    fontSize: 17,
-    fontWeight: '900',
-    letterSpacing: 2,
-    textAlign: 'center',
-    marginTop: 9,
-  },
-
-  title: {
-    color: '#222',
-    fontSize: 29,
-    fontWeight: '900',
-    textAlign: 'center',
-    marginTop: 25,
-  },
-
-  subtitle: {
-    color: '#777',
-    fontSize: 13,
-    textAlign: 'center',
-    marginTop: 7,
-    marginBottom: 20,
-  },
-
-  roleLabel: {
-    color: '#777',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 18,
-  },
-
-  roleButton: {
-    flex: 1,
-    height: 70,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#e1e1e1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  roleButtonActive: {
-    backgroundColor: '#18a565',
-    borderColor: '#18a565',
-  },
-
-  roleIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#e8f7f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  roleIconActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-
-  roleText: {
-    color: '#444',
-    fontSize: 9,
-    fontWeight: '900',
-    marginTop: 4,
-  },
-
-  roleTextActive: {
-    color: '#fff',
-  },
-
-  check: {
-    position: 'absolute',
-    top: 7,
-    right: 7,
-  },
-
-  inputContainer: {
-    height: 55,
-    backgroundColor: '#fff',
-    borderRadius: 11,
-    borderWidth: 1,
-    borderColor: '#e3e3e3',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    marginBottom: 12,
-  },
-
-  input: {
-    flex: 1,
-    height: '100%',
-    color: '#222',
-    fontSize: 14,
-    marginLeft: 10,
-  },
-
-  signupButton: {
-    height: 55,
-    borderRadius: 11,
-    backgroundColor: '#18a565',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 9,
-    marginTop: 8,
-  },
-
-  signupButtonText: {
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-
-  loginRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 23,
-  },
-
-  loginText: {
-    color: '#777',
-    fontSize: 13,
-  },
-
-  loginLink: {
-    color: '#18a565',
-    fontSize: 13,
-    fontWeight: '900',
-  },
+  container: { flex: 1, backgroundColor: RideColors.background },
+  scroll: { flexGrow: 1, paddingVertical: 30 },
+  content: { width: '90%', maxWidth: 430, alignSelf: 'center', paddingTop: 40 },
+  backButton: { position: 'absolute', top: 0, left: 0, width: 45, height: 45, borderRadius: 23, backgroundColor: RideColors.surface, borderWidth: 1, borderColor: RideColors.border, alignItems: 'center', justifyContent: 'center' },
+  logoCircle: { width: 65, height: 65, borderRadius: 33, backgroundColor: RideColors.accentStrong, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
+  logoText: { color: RideColors.accent, fontSize: 17, fontWeight: '900', letterSpacing: 2, textAlign: 'center', marginTop: 9 },
+  title: { color: RideColors.text, fontSize: 29, fontWeight: '900', textAlign: 'center', marginTop: 25 },
+  subtitle: { color: RideColors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 7, marginBottom: 20 },
+  roleLabel: { color: RideColors.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
+  roleContainer: { flexDirection: 'row', gap: 10, marginBottom: 18 },
+  roleButton: { flex: 1, height: 70, backgroundColor: RideColors.surface, borderRadius: 15, borderWidth: 1, borderColor: RideColors.border, alignItems: 'center', justifyContent: 'center' },
+  roleButtonActive: { backgroundColor: RideColors.surfaceRaised, borderColor: RideColors.accentStrong },
+  roleIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: RideColors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
+  roleIconActive: { backgroundColor: RideColors.accentStrong },
+  roleText: { color: RideColors.textMuted, fontSize: 9, fontWeight: '900', marginTop: 4 },
+  roleTextActive: { color: RideColors.accent },
+  check: { position: 'absolute', top: 7, right: 7 },
+  inputContainer: { height: 55, backgroundColor: RideColors.surfaceRaised, borderRadius: 18, borderWidth: 1, borderColor: RideColors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginBottom: 12 },
+  input: { flex: 1, height: '100%', color: RideColors.text, fontSize: 14, marginLeft: 10 },
+  signupButton: { height: 55, borderRadius: 28, backgroundColor: RideColors.accentStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
+  signupButtonText: { color: RideColors.background, fontSize: 11, fontWeight: '900' },
+  loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 23 },
+  loginText: { color: RideColors.textMuted, fontSize: 13 },
+  loginLink: { color: RideColors.accent, fontSize: 13, fontWeight: '900' },
 });

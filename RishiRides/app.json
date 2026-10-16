@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "RishiRides",
@@ -6,13 +5,13 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "rishirides",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#315C4D"
+          "backgroundColor": "#071713"
         }
       ],
       [
@@ -20,7 +19,8 @@
         {
           "locationWhenInUsePermission": "RishiRide uses your location to set your pickup point when you ask it to."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true

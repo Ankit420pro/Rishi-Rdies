@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { RideColors } from '../../../constants/theme';
 import { vehicleForPassengerCount } from '../../../domain/ride-rules';
 
 const bookingConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
@@ -238,15 +239,15 @@ export default function PassengerDashboard() {
 }
 
 const colors = {
-  ink: '#081313',
-  background: '#0b1718',
-  panel: '#122223',
-  panelRaised: '#192c2d',
-  line: '#294142',
-  text: '#f3f5ed',
-  muted: '#9aadaa',
-  mint: '#9de4c1',
-  amber: '#e9b769',
+  ink: RideColors.background,
+  background: RideColors.background,
+  panel: RideColors.surface,
+  panelRaised: RideColors.surfaceRaised,
+  line: RideColors.border,
+  text: RideColors.text,
+  muted: RideColors.textMuted,
+  mint: RideColors.accent,
+  amber: RideColors.warning,
 };
 
 const styles = StyleSheet.create({

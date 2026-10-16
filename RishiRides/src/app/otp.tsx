@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -15,6 +14,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '../api/login';
 import { resendOtp, verifyOtp } from '../api/otp';
+import { saveAuthenticatedSession } from '../api/session';
+import { RideColors } from '../constants/theme';
 
 export default function OtpScreen() {
   const router = useRouter();
@@ -41,18 +42,20 @@ export default function OtpScreen() {
         otp,
       });
 
-      if (!result.verified || !role) {
+      if (
+        !result.verified ||
+        (role !== 'driver' && role !== 'passenger') ||
+        !sessionId ||
+        !mobile
+      ) {
         throw new Error('OTP verification failed.');
       }
 
-      await AsyncStorage.multiSet([
-        ['isLoggedIn', 'true'],
-        ['userRole', role],
-        ['userMobile', mobile ?? ''],
-        ...(result.token
-          ? ([['authToken', result.token]] as [string, string][])
-          : []),
-      ]);
+      await saveAuthenticatedSession({
+        token: result.token,
+        role,
+        mobile: mobile ?? '',
+      });
       router.replace(
         role === 'driver'
           ? '/dashboards/Drivers/driver-dashboard'
@@ -92,11 +95,11 @@ export default function OtpScreen() {
         ]}
       >
         <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <MaterialCommunityIcons name="arrow-left" size={24} color="#0f172a" />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={RideColors.text} />
         </Pressable>
 
         <View style={styles.logoCircle}>
-          <MaterialCommunityIcons name="shield-check" size={34} color="#fff" />
+          <MaterialCommunityIcons name="shield-check" size={34} color={RideColors.background} />
         </View>
         <Text style={styles.title}>Verify your number</Text>
         <Text style={styles.subtitle}>
@@ -111,7 +114,7 @@ export default function OtpScreen() {
           keyboardType="number-pad"
           maxLength={6}
           placeholder="000000"
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={RideColors.textMuted}
           textContentType="oneTimeCode"
           autoFocus
         />
@@ -125,7 +128,7 @@ export default function OtpScreen() {
             {loading ? 'VERIFYING...' : 'VERIFY OTP'}
           </Text>
           {!loading && (
-            <MaterialCommunityIcons name="arrow-right" size={22} color="#fff" />
+            <MaterialCommunityIcons name="arrow-right" size={22} color={RideColors.background} />
           )}
         </Pressable>
 
@@ -139,39 +142,39 @@ export default function OtpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8fafc' },
+  container: { flex: 1, backgroundColor: RideColors.background },
   content: { flex: 1, paddingHorizontal: 22 },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#fff',
+    backgroundColor: RideColors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 70,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: RideColors.border,
   },
   logoCircle: {
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#16a34a',
+    backgroundColor: RideColors.accentStrong,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     marginBottom: 25,
   },
-  title: { fontSize: 29, fontWeight: '900', color: '#0f172a', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: '#64748b', textAlign: 'center', marginTop: 9, marginBottom: 38 },
-  label: { fontSize: 11, fontWeight: '800', color: '#475569', letterSpacing: 0.8, marginBottom: 8 },
+  title: { fontSize: 29, fontWeight: '900', color: RideColors.text, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: RideColors.textMuted, textAlign: 'center', marginTop: 9, marginBottom: 38 },
+  label: { fontSize: 11, fontWeight: '800', color: RideColors.textMuted, letterSpacing: 0.8, marginBottom: 8 },
   otpInput: {
     height: 64,
     borderRadius: 13,
     borderWidth: 1,
-    borderColor: '#16a34a',
-    backgroundColor: '#fff',
-    color: '#0f172a',
+    borderColor: RideColors.accentStrong,
+    backgroundColor: RideColors.surface,
+    color: RideColors.text,
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: 10,
@@ -181,7 +184,7 @@ const styles = StyleSheet.create({
   verifyButton: {
     height: 58,
     borderRadius: 14,
-    backgroundColor: '#16a34a',
+    backgroundColor: RideColors.accentStrong,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,6 +192,6 @@ const styles = StyleSheet.create({
     marginTop: 25,
   },
   disabledButton: { opacity: 0.65 },
-  verifyText: { color: '#fff', fontSize: 15, fontWeight: '900' },
-  resendText: { color: '#15803d', fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 25 },
+  verifyText: { color: RideColors.background, fontSize: 15, fontWeight: '900' },
+  resendText: { color: RideColors.accent, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 25 },
 });
