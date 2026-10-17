@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  Bus,
   BusFront,
   ChevronDown,
   Compass,
@@ -82,7 +83,7 @@ function HomePage() {
           <div className="hero-copy">
             <p className="hero-location"><span className="hero-live-dot" /><MapPin size={14} /> RISHIKESH · UTTARAKHAND</p>
             <h1>YOUR RIDE.<br /><span>YOUR JOURNEY.</span></h1>
-            <p className="hero-description">Move through Rishikesh with a ride experience designed to feel simple and local.</p>
+            <p className="hero-description">Create a passenger account or start driver registration. Ride booking opens once dispatch, maps and driver review are ready.</p>
             <div className="hero-actions">
               <Link className="hero-role hero-role-passenger" to="/sign-up?role=passenger">
                 <span className="hero-role-icon"><UserRound size={21} /></span>
@@ -101,9 +102,9 @@ function HomePage() {
             <div className="hero-platform-shadow" />
             <div className="hero-vehicle-panel">
               <div className="hero-panel-location"><span /> RISHIKESH</div>
-              <div className="hero-vehicle-orbit"><BusFront size={112} strokeWidth={1.7} /></div>
+              <div className="hero-vehicle-orbit"><Bus size={112} strokeWidth={1.7} /></div>
               <div className="hero-vehicle-road" />
-              <div className="hero-floating-note"><span className="hero-note-icon"><Navigation size={17} /></span><span><small>READY TO MOVE</small><strong>Explore Rishikesh</strong></span></div>
+              <div className="hero-floating-note"><span className="hero-note-icon"><Navigation size={17} /></span><span><small>ACCOUNT SETUP</small><strong>Start with signup</strong></span></div>
             </div>
             <div className="hero-art-caption"><span>MOVE AROUND</span><strong>RISHIKESH</strong><small>One place to begin your local journey.</small></div>
           </div>
