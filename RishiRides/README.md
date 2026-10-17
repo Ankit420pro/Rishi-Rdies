@@ -31,6 +31,7 @@ Web sign-in is intentionally blocked after OTP verification because the app does
 `EXPO_PUBLIC_API_URL` is the base URL used by the existing login and OTP clients. The API must implement:
 
 - `POST /auth/login` with `{ mobile, password, role }`, returning `{ sessionId, mobile, role, maskedMobile }`.
+- `POST /auth/signup` with `{ name, mobile, password, role }` and `licenseNumber` for drivers only, returning `{ sessionId, mobile, role, maskedMobile }`.
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 
@@ -47,8 +48,8 @@ npm test
 
 | Area | Status |
 | --- | --- |
-| Landing, passenger/driver sign-in and sign-up screens | UI implemented |
-| OTP authentication | Requires a configured API implementing the contract above |
+| Landing, passenger/driver sign-in and sign-up screens | UI implemented; registration requires the configured API |
+| OTP authentication | Requires a configured API implementing the contract above; successful verification routes by account role |
 | Native session persistence | Verified session token is stored using Expo SecureStore |
 | Dashboard role routing | Client routes require a SecureStore session with the matching role; API authorization is still required |
 | Passenger pickup entry, foreground location request, destination suggestions and group-size vehicle choice | Client UI and local validation implemented |

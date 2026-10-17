@@ -11,11 +11,12 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  type TextInputProps,
   View,
 } from 'react-native';
+import { signupUser } from '../api/signup';
+import type { UserRole } from '../api/login';
 import { RideColors } from '../constants/theme';
-
-type UserRole = 'passenger' | 'driver';
 
 export default function SignupScreen() {
   const router = useRouter();
@@ -37,14 +38,19 @@ export default function SignupScreen() {
 
   const [showConfirm, setShowConfirm] =
     useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
+    const cleanMobile = mobile.replace(/\D/g, '');
+    const cleanName = name.trim();
+    const cleanLicenceNumber = LicenceNumber.trim();
+
     if (
-      !name ||
-      !mobile ||
+      !cleanName ||
+      !cleanMobile ||
       !password ||
       !confirmPassword ||
-      (role === 'driver' && !LicenceNumber)
+      (role === 'driver' && !cleanLicenceNumber)
     ) {
       Alert.alert(
         'Missing details',
@@ -53,7 +59,7 @@ export default function SignupScreen() {
       return;
     }
 
-    if (mobile.length !== 10) {
+    if (cleanMobile.length !== 10) {
       Alert.alert(
         'Invalid mobile',
         'Please enter a valid 10 digit mobile number.'
@@ -69,10 +75,34 @@ export default function SignupScreen() {
       return;
     }
 
-    Alert.alert(
-      'Sign-up unavailable',
-      'Account creation is not connected to a secure authentication service. No account has been created.'
-    );
+    try {
+      setLoading(true);
+      const response = await signupUser({
+        name: cleanName,
+        mobile: cleanMobile,
+        password,
+        role,
+        ...(role === 'driver' && { licenseNumber: cleanLicenceNumber }),
+      });
+
+      router.push({
+        pathname: '/otp',
+        params: {
+          mobile: response.mobile,
+          role: response.role,
+          sessionId: response.sessionId,
+        },
+      });
+    } catch (error) {
+      Alert.alert(
+        'Sign-up Error',
+        error instanceof Error
+          ? error.message
+          : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -141,9 +171,10 @@ export default function SignupScreen() {
                 role === 'passenger' &&
                   styles.roleButtonActive,
               ]}
-              onPress={() =>
-                setRole('passenger')
-              }
+              onPress={() => {
+                setRole('passenger');
+                setLicenceNumber('');
+              }}
             >
               <View
                 style={[
@@ -254,15 +285,15 @@ export default function SignupScreen() {
             maxLength={10}
           />
 
-          {/* Licence Number */}
-
-          <Input
-            icon="card-account-details-outline"
-            placeholder="Licence Number"
-            value={LicenceNumber}
-            onChangeText={setLicenceNumber}
-            keyboardType="numeric"
-          />
+          {role === 'driver' && (
+            <Input
+              icon="card-account-details-outline"
+              placeholder="Driving licence number"
+              value={LicenceNumber}
+              onChangeText={setLicenceNumber}
+              autoCapitalize="characters"
+            />
+          )}
 
           {/* PASSWORD */}
 
@@ -337,22 +368,26 @@ export default function SignupScreen() {
           {/* SIGNUP */}
 
           <Pressable
-            style={styles.signupButton}
+            style={[
+              styles.signupButton,
+              loading && styles.signupButtonDisabled,
+            ]}
             onPress={handleSignup}
+            disabled={loading}
           >
             <Text style={styles.signupButtonText}>
-              CREATE{' '}
-              {role === 'passenger'
-                ? 'PASSENGER'
-                : 'DRIVER'}{' '}
-              ACCOUNT
+              {loading
+                ? 'CREATING ACCOUNT...'
+                : `CREATE ${role === 'passenger' ? 'PASSENGER' : 'DRIVER'} ACCOUNT`}
             </Text>
 
-            <MaterialCommunityIcons
-              name="arrow-right"
-              size={20}
-              color={RideColors.background}
-            />
+            {!loading && (
+              <MaterialCommunityIcons
+                name="arrow-right"
+                size={20}
+                color={RideColors.background}
+              />
+            )}
           </Pressable>
 
           {/* LOGIN */}
@@ -388,13 +423,15 @@ function Input({
   onChangeText,
   keyboardType,
   maxLength,
+  autoCapitalize,
 }: {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
-  keyboardType?: any;
+  keyboardType?: TextInputProps['keyboardType'];
   maxLength?: number;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
 }) {
   return (
     <View style={styles.inputContainer}>
@@ -412,7 +449,7 @@ function Input({
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         maxLength={maxLength}
-        autoCapitalize="none"
+        autoCapitalize={autoCapitalize ?? 'none'}
       />
     </View>
   );
@@ -439,6 +476,7 @@ const styles = StyleSheet.create({
   inputContainer: { height: 55, backgroundColor: RideColors.surfaceRaised, borderRadius: 18, borderWidth: 1, borderColor: RideColors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginBottom: 12 },
   input: { flex: 1, height: '100%', color: RideColors.text, fontSize: 14, marginLeft: 10 },
   signupButton: { height: 55, borderRadius: 28, backgroundColor: RideColors.accentStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
+  signupButtonDisabled: { opacity: 0.6 },
   signupButtonText: { color: RideColors.background, fontSize: 11, fontWeight: '900' },
   loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 23 },
   loginText: { color: RideColors.textMuted, fontSize: 13 },

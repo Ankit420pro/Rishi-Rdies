@@ -38,6 +38,8 @@
     "@types/react": "~19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
