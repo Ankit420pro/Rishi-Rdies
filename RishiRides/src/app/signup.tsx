@@ -20,7 +20,7 @@ type UserRole = 'passenger' | 'driver';
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { role: initialRole } = useLocalSearchParams<{ role?: string }>();
+  const { role: initialRole, destination } = useLocalSearchParams<{ role?: string; destination?: string }>();
 
   const [role, setRole] = useState<UserRole>(initialRole === 'driver' ? 'driver' : 'passenger');
 
@@ -74,7 +74,7 @@ export default function SignupScreen() {
           role: response.role,
           sessionId: response.sessionId,
           developmentOtp: response.developmentOtp ?? '',
-          preferredLanguage,
+          destination: destination ?? '',
         },
       });
     } catch (error) {

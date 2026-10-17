@@ -2,6 +2,7 @@ import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
 
 export const OTP_TTL_MS = 5 * 60 * 1000;
 export const OTP_MAX_ATTEMPTS = 5;
+export const DEVELOPMENT_OTP = '1234';
 
 export function createOtp(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, '0');

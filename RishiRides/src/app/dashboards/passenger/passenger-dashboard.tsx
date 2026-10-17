@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import {
   Alert,
@@ -30,9 +30,10 @@ const destinations = [
 
 export default function PassengerDashboard() {
   const router = useRouter();
+  const { destination: initialDestination } = useLocalSearchParams<{ destination?: string }>();
   const insets = useSafeAreaInsets();
   const [pickup, setPickup] = useState('');
-  const [destination, setDestination] = useState('');
+  const [destination, setDestination] = useState(initialDestination ?? '');
   const [pickupCoordinates, setPickupCoordinates] = useState<Location.LocationObjectCoords | null>(null);
   const [passengerCount, setPassengerCount] = useState(1);
   const [locationLoading, setLocationLoading] = useState(false);

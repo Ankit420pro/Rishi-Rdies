@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { config } from '../config';
 import { prisma } from '../db';
-import { createOtp, hashOtp, isOtpUsable, otpMatches, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from './otp';
+import { DEVELOPMENT_OTP, hashOtp, isOtpUsable, otpMatches, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from './otp';
 import { sendTwilioOtp, verifyTwilioOtp } from './otp-provider';
 
 export const authRouter = Router();
@@ -25,11 +25,11 @@ const signupSchema = z.object({
   termsAccepted: z.literal(true),
   privacyAccepted: z.literal(true),
 });
-const verifySchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema, otp: z.string().regex(/^[0-9]{6}$/) });
+const verifySchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema, otp: z.string().regex(/^[0-9]{4,6}$/) });
 const resendSchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema });
 
 async function issueOtp(userId: string, mobile: string) {
-  const code = config.developmentOtpEnabled ? createOtp() : undefined;
+  const code = config.developmentOtpEnabled ? DEVELOPMENT_OTP : undefined;
   const challenge = await prisma.$transaction(async (transaction) => {
     await transaction.otpChallenge.updateMany({ where: { userId, consumedAt: null }, data: { consumedAt: new Date() } });
     return transaction.otpChallenge.create({
@@ -39,7 +39,6 @@ async function issueOtp(userId: string, mobile: string) {
   });
 
   if (config.developmentOtpEnabled) {
-    console.info(`[DEV OTP] challenge=${challenge.id} code=${code}`);
     return { developmentOtp: code };
   }
 
@@ -140,7 +139,9 @@ authRouter.post('/resend-otp', requestLimit, async (request, response, next) => 
 
 authRouter.post('/verify-otp', requestLimit, async (request, response, next) => {
   const parsed = verifySchema.safeParse(request.body);
-  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter the six-digit code for this session.' } });
+  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter the verification code for this session.' } });
+  const requiredLength = config.developmentOtpEnabled ? 4 : 6;
+  if (parsed.data.otp.length !== requiredLength) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: `Enter the ${requiredLength}-digit verification code.` } });
 
   try {
     const result = await prisma.$transaction(async (transaction) => {
@@ -151,7 +152,7 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
       if (!challenge || !isOtpUsable(challenge)) return { kind: 'invalid' as const };
 
       const matches = config.developmentOtpEnabled
-        ? otpMatches(parsed.data.otp, challenge.codeHash)
+        ? parsed.data.otp === DEVELOPMENT_OTP && otpMatches(DEVELOPMENT_OTP, challenge.codeHash)
         : config.OTP_PROVIDER === 'twilio-verify'
           ? await verifyTwilioOtp(parsed.data.mobile, parsed.data.otp, {
               accountSid: config.TWILIO_ACCOUNT_SID!,

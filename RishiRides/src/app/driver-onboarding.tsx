@@ -11,25 +11,25 @@ const stages = [
     title: 'Personal details',
     subtitle: 'Account and identity',
     icon: 'account-check-outline' as const,
-    requirements: ['Legal name and verified mobile', 'Service city and current address', 'Date of birth only where eligibility rules require it', 'Emergency contact recommended'],
+    requirements: ['Full legal name, verified mobile and profile photo', 'Date of birth only where eligibility rules require it', 'Current address and service city', 'Accepted identity-proof details for the launch location', 'Emergency contact recommended'],
   },
   {
-    title: 'Identity & driving eligibility',
+    title: 'Driving documents',
     subtitle: 'Documents and checks',
     icon: 'card-account-details-outline' as const,
-    requirements: ['Accepted identity proof for the launch location', 'Driving licence, class and expiry', 'Applicable badge or public-service authorization', 'Background and medical checks where required'],
+    requirements: ['Driving licence number, class, validity and document upload', 'Applicable public-service badge or authorization', 'Identity, background or police verification as required', 'Medical fitness checks where required'],
   },
   {
     title: 'Vehicle details',
     subtitle: 'Vehicle-specific documents',
     icon: 'car-outline' as const,
-    requirements: ['Auto, bike, car or SUV details', 'Registration, make, model, colour and year', 'RC, insurance and applicable permit, fitness and PUC', 'Vehicle photo and owner authorization when needed'],
+    requirements: ['Vehicle category, registration, make, model, colour and year', 'RC and valid insurance', 'Applicable permit, fitness certificate, PUC and commercial authorization', 'Vehicle photo and owner authorization when needed'],
   },
   {
     title: 'Payout & activation',
     subtitle: 'Review before going online',
     icon: 'bank-outline' as const,
-    requirements: ['Payout account collected through a secure provider', 'Service area and working preferences', 'Driver agreement and document expiry dates', 'Administrator review before any ride acceptance'],
+    requirements: ['Bank account and payout verification through a secure provider', 'Service area and working preferences', 'Driver agreement acceptance and document expiry dates', 'Administrator review and approval before any ride acceptance'],
   },
 ];
 
@@ -44,17 +44,17 @@ export default function DriverOnboardingScreen() {
   const translatedStages = hindi
     ? [
         { title: 'व्यक्तिगत जानकारी', subtitle: 'खाता और पहचान' },
-        { title: 'पहचान और ड्राइविंग पात्रता', subtitle: 'दस्तावेज़ और जाँच' },
+        { title: 'ड्राइविंग दस्तावेज़', subtitle: 'दस्तावेज़ और जाँच' },
         { title: 'वाहन विवरण', subtitle: 'वाहन के दस्तावेज़' },
         { title: 'भुगतान और सक्रियण', subtitle: 'ऑनलाइन होने से पहले समीक्षा' },
       ]
     : stages.map(({ title, subtitle }) => ({ title, subtitle }));
   const translatedRequirements = hindi
     ? [
-        ['कानूनी नाम और सत्यापित मोबाइल', 'सेवा शहर और वर्तमान पता', 'जहाँ पात्रता नियम माँगें, केवल वहीं जन्मतिथि', 'आपातकालीन संपर्क की सलाह'],
-        ['लॉन्च स्थान के लिए स्वीकृत पहचान प्रमाण', 'ड्राइविंग लाइसेंस, श्रेणी और समाप्ति तिथि', 'जहाँ लागू हो, सार्वजनिक सेवा बैज या अनुमति', 'जहाँ आवश्यक हो, पृष्ठभूमि और स्वास्थ्य जाँच'],
-        ['ऑटो, बाइक, कार या SUV', 'पंजीकरण, निर्माता, मॉडल, रंग और वर्ष', 'RC, बीमा तथा लागू परमिट, फिटनेस और PUC', 'वाहन की फोटो और ज़रूरत पर मालिक की अनुमति'],
-        ['सुरक्षित प्रदाता से भुगतान खाता', 'सेवा क्षेत्र और काम की प्राथमिकताएँ', 'ड्राइवर समझौता और दस्तावेज़ समाप्ति तिथियाँ', 'किसी भी राइड से पहले व्यवस्थापक समीक्षा'],
+        ['पूरा कानूनी नाम, सत्यापित मोबाइल और प्रोफ़ाइल फ़ोटो', 'पात्रता नियम माँगें तभी जन्मतिथि', 'वर्तमान पता और सेवा शहर', 'लॉन्च स्थान के लिए स्वीकृत पहचान विवरण', 'आपातकालीन संपर्क की सलाह'],
+        ['ड्राइविंग लाइसेंस नंबर, श्रेणी, वैधता और दस्तावेज़ अपलोड', 'लागू सार्वजनिक सेवा बैज या अनुमति', 'आवश्यकतानुसार पहचान, पुलिस या पृष्ठभूमि जाँच', 'आवश्यकतानुसार स्वास्थ्य जाँच'],
+        ['वाहन श्रेणी, पंजीकरण, निर्माता, मॉडल, रंग और वर्ष', 'RC और वैध बीमा', 'लागू परमिट, फिटनेस, PUC और वाणिज्यिक अनुमति', 'ज़रूरत पर वाहन फ़ोटो और मालिक की अनुमति'],
+        ['सुरक्षित प्रदाता के ज़रिए बैंक और भुगतान सत्यापन', 'सेवा क्षेत्र और काम की प्राथमिकताएँ', 'ड्राइवर समझौता और दस्तावेज़ की समाप्ति तिथियाँ', 'राइड स्वीकारने से पहले व्यवस्थापक की मंज़ूरी'],
       ][stageIndex]
     : stage.requirements;
 

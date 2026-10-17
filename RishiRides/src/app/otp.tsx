@@ -20,11 +20,11 @@ import { RishiColors } from '../constants/theme';
 export default function OtpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mobile, role, sessionId, preferredLanguage, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
+  const { mobile, role, sessionId, destination, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
     mobile: string;
     role: UserRole;
     sessionId: string;
-    preferredLanguage?: string;
+    destination?: string;
     developmentOtp?: string;
   }>();
   const [otp, setOtp] = useState('');
@@ -32,10 +32,11 @@ export default function OtpScreen() {
   const [resending, setResending] = useState(false);
   const [challengeId, setChallengeId] = useState(sessionId ?? '');
   const [developmentOtp, setDevelopmentOtp] = useState(initialDevelopmentOtp ?? '');
+  const otpLength = developmentOtp ? developmentOtp.length : 6;
 
   const handleVerify = async () => {
-    if (otp.length !== 6) {
-      Alert.alert('Invalid OTP', 'Please enter the 6-digit OTP.');
+    if (otp.length !== otpLength) {
+      Alert.alert('Invalid OTP', `Please enter the ${otpLength}-digit OTP.`);
       return;
     }
 
@@ -54,8 +55,8 @@ export default function OtpScreen() {
       await saveAuthenticatedSession({ role, mobile, token: result.token });
       router.replace(
         role === 'driver'
-          ? { pathname: '/driver-onboarding', params: { language: preferredLanguage === 'hi' ? 'hi' : 'en' } }
-          : '/dashboards/passenger/passenger-dashboard'
+          ? '/dashboards/Drivers/driver-dashboard'
+          : { pathname: '/dashboards/passenger/passenger-dashboard', params: { destination: destination ?? '' } }
       );
     } catch (error) {
       Alert.alert(
@@ -105,10 +106,10 @@ export default function OtpScreen() {
         </View>
         <Text style={styles.title}>Verify your number</Text>
         <Text style={styles.subtitle}>
-          Enter the 6-digit OTP sent to {mobile ? `******${mobile.slice(-4)}` : 'your mobile'}.
+          Enter the {otpLength}-digit OTP sent to {mobile ? `******${mobile.slice(-4)}` : 'your mobile'}.
         </Text>
 
-        {developmentOtp.length === 6 && (
+        {developmentOtp.length > 0 && (
           <View style={styles.developmentCode}>
             <MaterialCommunityIcons name="flask-outline" size={17} color={RishiColors.warning} />
             <Text style={styles.developmentCodeText}>Development OTP: {developmentOtp}</Text>
@@ -119,10 +120,10 @@ export default function OtpScreen() {
         <TextInput
           style={styles.otpInput}
           value={otp}
-          onChangeText={(value) => setOtp(value.replace(/\D/g, '').slice(0, 6))}
+          onChangeText={(value) => setOtp(value.replace(/\D/g, '').slice(0, otpLength))}
           keyboardType="number-pad"
-          maxLength={6}
-          placeholder="000000"
+          maxLength={otpLength}
+          placeholder={'0'.repeat(otpLength)}
           placeholderTextColor={RishiColors.muted}
           textContentType="oneTimeCode"
           autoFocus

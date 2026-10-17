@@ -2,8 +2,6 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Bus,
-  BusFront,
   ChevronDown,
   Compass,
   LocateFixed,
@@ -13,7 +11,6 @@ import {
   Search,
   ShieldCheck,
   X,
-  UserRound,
 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
 import { Link, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -57,8 +54,9 @@ function SiteHeader() {
     <header className={`site-header${isHome ? ' site-header-home' : ''}`}>
       <div className="header-inner">
         <Link to="/" className="brand" aria-label="RishiRide home">
-          <span className="brand-icon"><BusFront size={21} strokeWidth={2.5} /></span>
-          <span className="brand-word brand-stack"><span>RISHI</span><span>RIDES</span></span>
+          <span className="brand-icon"><Navigation size={20} strokeWidth={2.7} /></span>
+          <span className="brand-word">Rishi<span>Ride</span></span>
+          <span className="brand-city">RISHIKESH</span>
         </Link>
         <button className="mobile-menu-button icon-button" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -77,37 +75,18 @@ function SiteHeader() {
 
 function HomePage() {
   return (
-    <div className="home-page">
-      <section className="home-hero">
-        <div className="home-hero-inner">
-          <div className="hero-copy">
-            <p className="hero-location"><span className="hero-live-dot" /><MapPin size={14} /> RISHIKESH · UTTARAKHAND</p>
-            <h1>YOUR RIDE.<br /><span>YOUR JOURNEY.</span></h1>
-            <p className="hero-description">Create a passenger account or start driver registration. Ride booking opens once dispatch, maps and driver review are ready.</p>
-            <div className="hero-actions">
-              <Link className="hero-role hero-role-passenger" to="/sign-up?role=passenger">
-                <span className="hero-role-icon"><UserRound size={21} /></span>
-                <span className="hero-role-copy"><strong>I NEED A RIDE</strong><small>Find a comfortable ride around Rishikesh</small></span>
-                <span className="hero-role-arrow"><ArrowRight size={19} /></span>
-              </Link>
-              <Link className="hero-role hero-role-driver" to="/sign-up?role=driver">
-                <span className="hero-role-icon"><Navigation size={21} /></span>
-                <span className="hero-role-copy"><strong>I WANT TO DRIVE</strong><small>Begin driver registration in four steps</small></span>
-                <ArrowRight className="hero-driver-arrow" size={19} />
-              </Link>
-            </div>
-            <div className="hero-trust-row"><span><ShieldCheck size={15} /> PHONE VERIFIED</span><span><BusFront size={15} /> LOCAL RIDES</span><span><MapPin size={15} /> RISHIKESH</span></div>
-          </div>
-          <div className="hero-art-wrap" aria-label="RishiRides local vehicle illustration">
-            <div className="hero-platform-shadow" />
-            <div className="hero-vehicle-panel">
-              <div className="hero-panel-location"><span /> RISHIKESH</div>
-              <div className="hero-vehicle-orbit"><Bus size={112} strokeWidth={1.7} /></div>
-              <div className="hero-vehicle-road" />
-              <div className="hero-floating-note"><span className="hero-note-icon"><Navigation size={17} /></span><span><small>ACCOUNT SETUP</small><strong>Start with signup</strong></span></div>
-            </div>
-            <div className="hero-art-caption"><span>MOVE AROUND</span><strong>RISHIKESH</strong><small>One place to begin your local journey.</small></div>
-          </div>
+    <div className="page-wrap home-page">
+      <section className="home-intro">
+        <div className="intro-copy">
+          <p className="eyebrow"><span className="eyebrow-line" /> RISHIKESH, UTTARAKHAND</p>
+          <h1>Find your way<br /><em>through the valley.</em></h1>
+          <p className="intro-deck">A local ride, beginning with a clear pickup and a place to go.</p>
+          <div className="intro-foot"><span className="intro-mark">01</span><span>RISHI RIDE · LOCAL JOURNEYS</span><span className="intro-rule" /></div>
+        </div>
+        <div className="intro-art" aria-label="Photograph of Triveni Ghat in Rishikesh">
+          <img src={destinations[0].photoUrl ?? ''} alt="Evening lamps at Triveni Ghat, Rishikesh" />
+          <a className="photo-credit" href={destinations[0].photoSource ?? '#'} target="_blank" rel="noreferrer">TRIVENI GHAT <ArrowUpRight size={12} /></a>
+          <div className="art-stamp"><span>30°</span><span>RISHIKESH</span></div>
         </div>
       </section>
 
@@ -142,8 +121,9 @@ function HomePage() {
 }
 
 function BookingForm() {
+  const [searchParams] = useSearchParams();
   const [pickup, setPickup] = useState('');
-  const [dropoff, setDropoff] = useState('');
+  const [dropoff, setDropoff] = useState(() => searchParams.get('destination') ?? '');
   const [partySize, setPartySize] = useState(1);
   const [locationBusy, setLocationBusy] = useState(false);
   const [notice, setNotice] = useState('');
@@ -396,6 +376,8 @@ function VerifyPage() {
     return <div className="page-wrap verify-missing"><p className="eyebrow">VERIFICATION SESSION ENDED</p><h1>Start again from your phone number.</h1><Link className="book-place" to="/sign-in">Back to sign in <ArrowRight size={16} /></Link></div>;
   }
 
+  const codeLength = session.developmentOtp?.length || 6;
+
   const verify = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!apiBase) return setMessage('Phone verification is not configured. No code was checked.');
@@ -453,10 +435,10 @@ function VerifyPage() {
         <div className="account-form-wrap">
           <p className="eyebrow">{verified ? 'VERIFIED' : 'SMS CODE'}</p>
           <h1>{verified ? 'Your number is verified.' : 'Check your messages.'}</h1>
-          <p className="account-subtitle">{verified ? 'This browser does not store authentication tokens. Continue in the RishiRides mobile app to use your account.' : `Enter the 6-digit code sent to ******${session.mobile.slice(-4)}.`}</p>
+          <p className="account-subtitle">{verified ? 'This browser does not store authentication tokens. Continue in the RishiRides mobile app to use your account.' : `Enter the ${codeLength}-digit code sent to ******${session.mobile.slice(-4)}.`}</p>
           {!verified && session.developmentOtp && <p className="form-notice">Development OTP: {session.developmentOtp}</p>}
           {!verified && <form className="account-form" onSubmit={verify}>
-            <label>6-digit code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" /></label>
+            <label>{codeLength}-digit code<input required inputMode="numeric" autoComplete="one-time-code" pattern={`[0-9]{${codeLength}}`} maxLength={codeLength} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, codeLength))} placeholder={'0'.repeat(codeLength)} /></label>
             {message && <p className="form-notice account-notice" role="alert">{message}</p>}
             <button className="account-submit" type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify phone'}<ArrowRight size={16} /></button>
           </form>}
