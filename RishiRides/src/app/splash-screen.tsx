@@ -7,7 +7,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { RideColors } from '../constants/theme';
 
 export default function SplashScreen() {
   const scale = useRef(new Animated.Value(0.7)).current;
@@ -72,11 +71,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-<<<<<<< HEAD
     backgroundColor: RishiColors.background,
-=======
-    backgroundColor: RideColors.background,
->>>>>>> origin/main
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -91,16 +86,12 @@ const styles = StyleSheet.create({
     width: 125,
     height: 125,
     borderRadius: 38,
-<<<<<<< HEAD
     backgroundColor: RishiColors.surface,
-=======
-    backgroundColor: RideColors.surface,
->>>>>>> origin/main
 
     justifyContent: 'center',
     alignItems: 'center',
 
-    shadowColor: '#000000',
+    shadowColor: '#003B70',
     shadowOffset: {
       width: 0,
       height: 15,
@@ -114,11 +105,7 @@ const styles = StyleSheet.create({
   logoIcon: {
     fontSize: 72,
     fontWeight: '900',
-<<<<<<< HEAD
     color: RishiColors.mint,
-=======
-    color: RideColors.accentStrong,
->>>>>>> origin/main
     fontStyle: 'italic',
   },
 
@@ -126,11 +113,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
     fontSize: 42,
     fontWeight: '900',
-<<<<<<< HEAD
     color: RishiColors.text,
-=======
-    color: RideColors.text,
->>>>>>> origin/main
     letterSpacing: -1.5,
   },
 
@@ -138,11 +121,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     fontSize: 16,
     fontWeight: '600',
-<<<<<<< HEAD
     color: RishiColors.muted,
-=======
-    color: RideColors.textMuted,
->>>>>>> origin/main
     letterSpacing: 1,
   },
 
@@ -150,11 +129,7 @@ const styles = StyleSheet.create({
     width: 55,
     height: 4,
     borderRadius: 10,
-<<<<<<< HEAD
     backgroundColor: RishiColors.mint,
-=======
-    backgroundColor: RideColors.accent,
->>>>>>> origin/main
     marginTop: 30,
     marginBottom: 18,
   },

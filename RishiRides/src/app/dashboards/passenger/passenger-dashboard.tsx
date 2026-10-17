@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RideColors } from '../../../constants/theme';
 import { vehicleForPassengerCount } from '../../../domain/ride-rules';
 import { RishiColors } from '../../../constants/theme';
 
@@ -240,7 +239,6 @@ export default function PassengerDashboard() {
 }
 
 const colors = {
-<<<<<<< HEAD
   ink: RishiColors.background,
   background: RishiColors.background,
   panel: RishiColors.surface,
@@ -250,17 +248,6 @@ const colors = {
   muted: RishiColors.muted,
   mint: RishiColors.mint,
   amber: RishiColors.warning,
-=======
-  ink: RideColors.background,
-  background: RideColors.background,
-  panel: RideColors.surface,
-  panelRaised: RideColors.surfaceRaised,
-  line: RideColors.border,
-  text: RideColors.text,
-  muted: RideColors.textMuted,
-  mint: RideColors.accent,
-  amber: RideColors.warning,
->>>>>>> origin/main
 };
 
 const styles = StyleSheet.create({

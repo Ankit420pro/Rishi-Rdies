@@ -1,6 +1,6 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -11,57 +11,26 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  type TextInputProps,
   View,
 } from 'react-native';
-<<<<<<< HEAD
 import { loginUser } from '../api/login';
 import { RishiColors } from '../constants/theme';
 
 type UserRole = 'passenger' | 'driver';
-=======
-import { signupUser } from '../api/signup';
-import type { UserRole } from '../api/login';
-import { RideColors } from '../constants/theme';
->>>>>>> origin/main
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { role: requestedRole } = useLocalSearchParams<{ role?: UserRole }>();
 
-  const [role, setRole] = useState<UserRole>(
-    requestedRole === 'driver' ? 'driver' : 'passenger'
-  );
+  const [role, setRole] =
+    useState<UserRole>('passenger');
 
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
 
-<<<<<<< HEAD
   const handleSignup = async () => {
     const cleanMobile = mobile.replace(/\D/g, '');
     if (!name.trim() || !cleanMobile) {
-=======
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [showConfirm, setShowConfirm] =
-    useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleSignup = async () => {
-    const cleanMobile = mobile.replace(/\D/g, '');
-    const cleanName = name.trim();
-    const cleanLicenceNumber = LicenceNumber.trim();
-
-    if (
-      !cleanName ||
-      !cleanMobile ||
-      !password ||
-      !confirmPassword ||
-      (role === 'driver' && !cleanLicenceNumber)
-    ) {
->>>>>>> origin/main
       Alert.alert(
         'Missing details',
         'Enter your name and mobile number to continue.'
@@ -101,38 +70,6 @@ export default function SignupScreen() {
     } finally {
       setLoading(false);
     }
-<<<<<<< HEAD
-=======
-
-    try {
-      setLoading(true);
-      const response = await signupUser({
-        name: cleanName,
-        mobile: cleanMobile,
-        password,
-        role,
-        ...(role === 'driver' && { licenseNumber: cleanLicenceNumber }),
-      });
-
-      router.push({
-        pathname: '/otp',
-        params: {
-          mobile: response.mobile,
-          role: response.role,
-          sessionId: response.sessionId,
-        },
-      });
-    } catch (error) {
-      Alert.alert(
-        'Sign-up Error',
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong. Please try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
->>>>>>> origin/main
   };
 
   return (
@@ -159,11 +96,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="arrow-left"
               size={23}
-<<<<<<< HEAD
               color={RishiColors.text}
-=======
-              color={RideColors.text}
->>>>>>> origin/main
             />
           </Pressable>
 
@@ -173,11 +106,7 @@ export default function SignupScreen() {
             <MaterialCommunityIcons
               name="rickshaw"
               size={34}
-<<<<<<< HEAD
               color={RishiColors.background}
-=======
-              color={RideColors.background}
->>>>>>> origin/main
             />
           </View>
 
@@ -209,10 +138,9 @@ export default function SignupScreen() {
                 role === 'passenger' &&
                   styles.roleButtonActive,
               ]}
-              onPress={() => {
-                setRole('passenger');
-                setLicenceNumber('');
-              }}
+              onPress={() =>
+                setRole('passenger')
+              }
             >
               <View
                 style={[
@@ -226,13 +154,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'passenger'
-<<<<<<< HEAD
                       ? RishiColors.background
                       : RishiColors.mint
-=======
-                      ? RideColors.background
-                      : RideColors.accent
->>>>>>> origin/main
                   }
                 />
               </View>
@@ -251,11 +174,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-<<<<<<< HEAD
                   color={RishiColors.background}
-=======
-                  color={RideColors.accent}
->>>>>>> origin/main
                   style={styles.check}
                 />
               )}
@@ -285,13 +204,8 @@ export default function SignupScreen() {
                   size={24}
                   color={
                     role === 'driver'
-<<<<<<< HEAD
                       ? RishiColors.background
                       : RishiColors.mint
-=======
-                      ? RideColors.background
-                      : RideColors.accent
->>>>>>> origin/main
                   }
                 />
               </View>
@@ -310,11 +224,7 @@ export default function SignupScreen() {
                 <MaterialCommunityIcons
                   name="check-circle"
                   size={18}
-<<<<<<< HEAD
                   color={RishiColors.background}
-=======
-                  color={RideColors.accent}
->>>>>>> origin/main
                   style={styles.check}
                 />
               )}
@@ -341,121 +251,16 @@ export default function SignupScreen() {
             maxLength={10}
           />
 
-<<<<<<< HEAD
           <Pressable
             style={[styles.signupButton, loading && styles.disabledButton]}
-=======
-          {role === 'driver' && (
-            <Input
-              icon="card-account-details-outline"
-              placeholder="Driving licence number"
-              value={LicenceNumber}
-              onChangeText={setLicenceNumber}
-              autoCapitalize="characters"
-            />
-          )}
-
-          {/* PASSWORD */}
-
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="lock"
-              size={21}
-              color={RideColors.accent}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              placeholderTextColor={RideColors.textMuted}
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
-            />
-
-            <Pressable
-              onPress={() =>
-                setShowPassword(!showPassword)
-              }
-            >
-              <MaterialCommunityIcons
-                name={
-                  showPassword
-                    ? 'eye-off'
-                    : 'eye'
-                }
-                size={21}
-                color={RideColors.textMuted}
-              />
-            </Pressable>
-          </View>
-
-          {/* CONFIRM */}
-
-          <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="lock-check"
-              size={21}
-              color={RideColors.accent}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm password"
-              placeholderTextColor={RideColors.textMuted}
-              secureTextEntry={!showConfirm}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-
-            <Pressable
-              onPress={() =>
-                setShowConfirm(!showConfirm)
-              }
-            >
-              <MaterialCommunityIcons
-                name={
-                  showConfirm
-                    ? 'eye-off'
-                    : 'eye'
-                }
-                size={21}
-                color={RideColors.textMuted}
-              />
-            </Pressable>
-          </View>
-
-          {/* SIGNUP */}
-
-          <Pressable
-            style={[
-              styles.signupButton,
-              loading && styles.signupButtonDisabled,
-            ]}
->>>>>>> origin/main
             onPress={handleSignup}
             disabled={loading}
           >
             <Text style={styles.signupButtonText}>
-<<<<<<< HEAD
               {loading ? 'SENDING CODE...' : 'CONTINUE WITH PHONE'}
             </Text>
 
             {!loading && <MaterialCommunityIcons name="arrow-right" size={20} color={RishiColors.background} />}
-=======
-              {loading
-                ? 'CREATING ACCOUNT...'
-                : `CREATE ${role === 'passenger' ? 'PASSENGER' : 'DRIVER'} ACCOUNT`}
-            </Text>
-
-            {!loading && (
-              <MaterialCommunityIcons
-                name="arrow-right"
-                size={20}
-                color={RideColors.background}
-              />
-            )}
->>>>>>> origin/main
           </Pressable>
 
           {/* LOGIN */}
@@ -467,7 +272,7 @@ export default function SignupScreen() {
 
             <Pressable
               onPress={() =>
-                router.push({ pathname: '/login', params: { role } })
+                router.push('/login')
               }
             >
               <Text style={styles.loginLink}>
@@ -491,48 +296,37 @@ function Input({
   onChangeText,
   keyboardType,
   maxLength,
-  autoCapitalize,
 }: {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   placeholder: string;
   value: string;
   onChangeText: (text: string) => void;
-  keyboardType?: TextInputProps['keyboardType'];
+  keyboardType?: any;
   maxLength?: number;
-  autoCapitalize?: TextInputProps['autoCapitalize'];
 }) {
   return (
     <View style={styles.inputContainer}>
       <MaterialCommunityIcons
         name={icon}
         size={21}
-<<<<<<< HEAD
         color={RishiColors.mint}
-=======
-        color={RideColors.accent}
->>>>>>> origin/main
       />
 
       <TextInput
         style={styles.input}
         placeholder={placeholder}
-<<<<<<< HEAD
         placeholderTextColor={RishiColors.muted}
-=======
-        placeholderTextColor={RideColors.textMuted}
->>>>>>> origin/main
         value={value}
         onChangeText={onChangeText}
         keyboardType={keyboardType}
         maxLength={maxLength}
-        autoCapitalize={autoCapitalize ?? 'none'}
+        autoCapitalize="none"
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-<<<<<<< HEAD
   container: {
     flex: 1,
     backgroundColor: RishiColors.background,
@@ -715,31 +509,4 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   disabledButton: { opacity: 0.6 },
-=======
-  container: { flex: 1, backgroundColor: RideColors.background },
-  scroll: { flexGrow: 1, paddingVertical: 30 },
-  content: { width: '90%', maxWidth: 430, alignSelf: 'center', paddingTop: 40 },
-  backButton: { position: 'absolute', top: 0, left: 0, width: 45, height: 45, borderRadius: 23, backgroundColor: RideColors.surface, borderWidth: 1, borderColor: RideColors.border, alignItems: 'center', justifyContent: 'center' },
-  logoCircle: { width: 65, height: 65, borderRadius: 33, backgroundColor: RideColors.accentStrong, alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
-  logoText: { color: RideColors.accent, fontSize: 17, fontWeight: '900', letterSpacing: 2, textAlign: 'center', marginTop: 9 },
-  title: { color: RideColors.text, fontSize: 29, fontWeight: '900', textAlign: 'center', marginTop: 25 },
-  subtitle: { color: RideColors.textMuted, fontSize: 13, textAlign: 'center', marginTop: 7, marginBottom: 20 },
-  roleLabel: { color: RideColors.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
-  roleContainer: { flexDirection: 'row', gap: 10, marginBottom: 18 },
-  roleButton: { flex: 1, height: 70, backgroundColor: RideColors.surface, borderRadius: 15, borderWidth: 1, borderColor: RideColors.border, alignItems: 'center', justifyContent: 'center' },
-  roleButtonActive: { backgroundColor: RideColors.surfaceRaised, borderColor: RideColors.accentStrong },
-  roleIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: RideColors.surfaceRaised, alignItems: 'center', justifyContent: 'center' },
-  roleIconActive: { backgroundColor: RideColors.accentStrong },
-  roleText: { color: RideColors.textMuted, fontSize: 9, fontWeight: '900', marginTop: 4 },
-  roleTextActive: { color: RideColors.accent },
-  check: { position: 'absolute', top: 7, right: 7 },
-  inputContainer: { height: 55, backgroundColor: RideColors.surfaceRaised, borderRadius: 18, borderWidth: 1, borderColor: RideColors.border, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, marginBottom: 12 },
-  input: { flex: 1, height: '100%', color: RideColors.text, fontSize: 14, marginLeft: 10 },
-  signupButton: { height: 55, borderRadius: 28, backgroundColor: RideColors.accentStrong, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, marginTop: 8 },
-  signupButtonDisabled: { opacity: 0.6 },
-  signupButtonText: { color: RideColors.background, fontSize: 11, fontWeight: '900' },
-  loginRow: { flexDirection: 'row', justifyContent: 'center', marginTop: 23 },
-  loginText: { color: RideColors.textMuted, fontSize: 13 },
-  loginLink: { color: RideColors.accent, fontSize: 13, fontWeight: '900' },
->>>>>>> origin/main
 });

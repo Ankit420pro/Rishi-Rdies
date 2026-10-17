@@ -20,11 +20,8 @@
           "locationWhenInUsePermission": "RishiRide uses your location to set your pickup point when you ask it to."
         }
       ],
-<<<<<<< HEAD
       "expo-image",
       "expo-web-browser",
-=======
->>>>>>> origin/main
       "expo-secure-store"
     ],
     "experiments": {
