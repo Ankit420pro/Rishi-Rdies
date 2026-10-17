@@ -1,9 +1,7 @@
 import {
-  ArrowDownRight,
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Check,
   ChevronDown,
   Compass,
   LocateFixed,
@@ -12,11 +10,10 @@ import {
   Navigation,
   Search,
   ShieldCheck,
-  Sparkles,
   X,
 } from 'lucide-react';
-import { FormEvent, useEffect, useState } from 'react';
-import { Link, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom';
+import { FormEvent, useState } from 'react';
+import { Link, NavLink, Route, Routes, useParams } from 'react-router-dom';
 import { Destination, destinations } from './data/destinations';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
@@ -118,7 +115,6 @@ function HomePage() {
 }
 
 function BookingForm() {
-  const navigate = useNavigate();
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [partySize, setPartySize] = useState(1);

@@ -1,56 +1,60 @@
-# Welcome to your Expo app 👋
+# RishiRides
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+RishiRides is a mobile-first Expo app for local rides in Rishikesh. The current repository contains the React Native client; it does not contain the production API, database, payment gateway, map provider, messaging provider, or admin panel.
 
-## Get started
+## Requirements
 
-1. Install dependencies
+- Node.js compatible with Expo SDK 57
+- Android Studio/emulator or an Android device with Expo Go/development build
+- An authentication API if you want to test phone sign-in
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Install and run
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Press `a` to open an Android emulator, or scan the QR code with a compatible Expo Go installation. For a physical device, set `EXPO_PUBLIC_API_URL` in `.env` to an API URL reachable from that device. Android emulators can commonly reach a host machine at `http://10.0.2.2:4000`.
 
-### Other setup steps
+The Expo web target is optional:
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm run web
+```
 
-## Learn more
+Web sign-in is intentionally blocked after OTP verification because the app does not persist credentials insecurely in browser storage.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Configuration
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+`EXPO_PUBLIC_API_URL` is the base URL used by the existing login and OTP clients. The API must implement:
 
-## Join the community
+- `POST /auth/login` with `{ mobile, password, role }`, returning `{ sessionId, mobile, role, maskedMobile }`.
+- `POST /auth/signup` with `{ name, mobile, password, role }` and `licenseNumber` for drivers only, returning `{ sessionId, mobile, role, maskedMobile }`.
+- `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
+- `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 
-Join our community of developers creating universal apps.
+This value is public client configuration, not a place for provider secrets. OTP provider credentials, database URLs, payment credentials, and messaging credentials belong only on a trusted server. No API URL or production credentials are included in this repository.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Checks
+
+```bash
+npx tsc --noEmit
+npm test
+```
+
+## Feature status
+
+| Area | Status |
+| --- | --- |
+| Landing, passenger/driver sign-in and sign-up screens | UI implemented; registration requires the configured API |
+| OTP authentication | Requires a configured API implementing the contract above; successful verification routes by account role |
+| Native session persistence | Verified session token is stored using Expo SecureStore |
+| Dashboard role routing | Client routes require a SecureStore session with the matching role; API authorization is still required |
+| Passenger pickup entry, foreground location request, destination suggestions and group-size vehicle choice | Client UI and local validation implemented |
+| Fare quotes, ride creation, driver matching, job dispatch and lifecycle | Not implemented; no API exists in this repository |
+| Driver onboarding, private document storage and approval | Not implemented |
+| Maps, push notifications, WhatsApp, payments and admin tools | Not implemented |
+
+Do not use the current app to accept real ride requests or payments. Client-side route checks are not a replacement for server-side authentication, authorization, ownership checks, or persisted ride state.

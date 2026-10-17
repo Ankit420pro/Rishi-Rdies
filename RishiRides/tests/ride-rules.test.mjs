@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  distanceInKilometres,
   eligibleDrivers,
   vehicleForPassengerCount,
 } from '../src/domain/ride-rules.ts';
@@ -24,4 +25,17 @@ test('matching requires a known pickup and active drivers within 10 km', () => {
     eligibleDrivers(pickup, drivers).map((driver) => driver.id),
     ['near-active']
   );
+});
+
+test('matching includes drivers exactly 10 km from a known pickup', () => {
+  const pickup = { latitude: 0, longitude: 0 };
+  const boundaryLatitude = (10 / 6371) * (180 / Math.PI);
+  const boundary = {
+    id: 'boundary',
+    active: true,
+    location: { latitude: boundaryLatitude, longitude: 0 },
+  };
+
+  assert.equal(distanceInKilometres(pickup, boundary.location), 10);
+  assert.deepEqual(eligibleDrivers(pickup, [boundary]), [boundary]);
 });

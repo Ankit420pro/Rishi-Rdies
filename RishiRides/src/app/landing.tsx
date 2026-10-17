@@ -169,7 +169,9 @@ export default function LandingScreen() {
 
               <Pressable
                 style={styles.passengerButton}
-                onPress={() => router.push('/login')}
+                onPress={() =>
+                  router.push({ pathname: '/login', params: { role: 'passenger' } })
+                }
               >
                 <LinearGradient
                   colors={['#B9FFE5', '#65DDB8']}
@@ -207,7 +209,9 @@ export default function LandingScreen() {
 
               <Pressable
                 style={styles.driverButton}
-                onPress={() => router.push('/login')}
+                onPress={() =>
+                  router.push({ pathname: '/login', params: { role: 'driver' } })
+                }
               >
                 <View style={styles.driverInner}>
                   <View style={styles.driverIcon}>

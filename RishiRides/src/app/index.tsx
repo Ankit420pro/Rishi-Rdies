@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { getAuthSession, type AuthSession } from '../api/auth-session';
 
 export default function Index() {
+<<<<<<< HEAD
   const [session, setSession] = useState<AuthSession | null | undefined>();
 
   useEffect(() => {
@@ -27,4 +28,7 @@ export default function Index() {
         : '/dashboards/passenger/passenger-dashboard'}
     />
   );
+=======
+  return <Redirect href="/landing" />;
+>>>>>>> origin/main
 }

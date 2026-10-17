@@ -7,6 +7,7 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+<<<<<<< HEAD
 export const RishiColors = {
   background: '#071713',
   surface: '#10251E',
@@ -18,10 +19,24 @@ export const RishiColors = {
   muted: '#A8BDB3',
   warning: '#E9C47B',
   danger: '#F07E7E',
+=======
+export const RideColors = {
+  background: '#071713',
+  surface: '#10251E',
+  surfaceRaised: '#18352A',
+  border: '#29473A',
+  text: '#F3F5ED',
+  textMuted: '#A9B9B0',
+  accent: '#9BE8C5',
+  accentStrong: '#52C891',
+  warning: '#E9B769',
+  critical: '#F87171',
+>>>>>>> origin/main
 } as const;
 
 export const Colors = {
   light: {
+<<<<<<< HEAD
     text: RishiColors.text,
     background: RishiColors.background,
     backgroundElement: RishiColors.surface,
@@ -34,6 +49,20 @@ export const Colors = {
     backgroundElement: RishiColors.surface,
     backgroundSelected: RishiColors.surfaceRaised,
     textSecondary: RishiColors.muted,
+=======
+    text: RideColors.text,
+    background: RideColors.background,
+    backgroundElement: RideColors.surface,
+    backgroundSelected: RideColors.surfaceRaised,
+    textSecondary: RideColors.textMuted,
+  },
+  dark: {
+    text: RideColors.text,
+    background: RideColors.background,
+    backgroundElement: RideColors.surface,
+    backgroundSelected: RideColors.surfaceRaised,
+    textSecondary: RideColors.textMuted,
+>>>>>>> origin/main
   },
 } as const;
 
