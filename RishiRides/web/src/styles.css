@@ -330,3 +330,129 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+/* RishiRides home: dark local-mobility hero */
+.site-header-home { background: #031b16; border-bottom-color: rgba(126, 231, 194, .13); }
+.site-header-home .header-inner { height: 66px; }
+.site-header-home .brand { gap: 11px; }
+.site-header-home .brand-icon { width: 47px; height: 47px; border: 1px solid rgba(174, 255, 225, .6); border-radius: 15px; background: #80e8c4; color: #064034; box-shadow: 0 0 22px rgba(96, 226, 184, .15); }
+.site-header-home .brand-stack { display: flex; flex-direction: column; gap: 2px; color: #f1fff9; font-size: 15px; line-height: 1; letter-spacing: 2px; }
+.site-header-home .brand-stack > span:first-child { color: #f1fff9; }
+.site-header-home .brand-stack > span:last-child { color: #75ddbd; font-size: 12px; letter-spacing: 2.5px; }
+.site-header-home .primary-nav { position: absolute; left: 50%; gap: 34px; transform: translateX(-50%); color: #92ada4; font-size: 10px; letter-spacing: 1.1px; text-transform: uppercase; }
+.site-header-home .primary-nav > a { color: #90aaa1; }
+.site-header-home .primary-nav > a:hover, .site-header-home .primary-nav > a:first-child { color: #75e0bf; }
+.site-header-home .nav-account { gap: 9px; margin-left: 9px; }
+.site-header-home .nav-sign-in { min-width: 72px; min-height: 35px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(119, 222, 190, .26); border-radius: 22px; color: #d8f5e9; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+.site-header-home .nav-join { min-height: 35px; padding: 0 16px; border-radius: 22px; background: #70dfbd; color: #07382e; font-size: 9px; letter-spacing: .7px; text-transform: uppercase; }
+.site-header-home .mobile-menu-button { border-color: rgba(119, 222, 190, .28); background: #0b2921; color: #9de8cb; }
+.home-page { width: 100%; max-width: none; margin: 0; overflow: hidden; color: #effbf6; background: #031b16; }
+.home-hero { position: relative; min-height: 586px; overflow: hidden; background: radial-gradient(ellipse at 24% 70%, rgba(15, 94, 71, .28), transparent 48%), linear-gradient(112deg, #031b16 0%, #06251d 56%, #041d17 100%); }
+.home-hero::before { position: absolute; top: -220px; right: -105px; width: 370px; height: 370px; border-radius: 0 0 0 100%; content: ''; background: rgba(64, 193, 151, .07); transform: rotate(-12deg); }
+.home-hero::after { position: absolute; right: 3%; top: 120px; width: 180px; height: 180px; border: 1px solid rgba(125, 226, 192, .08); border-radius: 50%; content: ''; }
+.home-hero-inner { position: relative; z-index: 1; width: min(1240px, calc(100% - 64px)); min-height: 586px; margin: 0 auto; display: grid; grid-template-columns: 1.08fr .92fr; align-items: center; gap: 32px; padding: 36px 0 42px; }
+.hero-copy { max-width: 620px; }
+.hero-location { width: max-content; min-height: 32px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid rgba(105, 220, 182, .15); border-radius: 20px; background: rgba(59, 169, 133, .14); color: #a1ddc8; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+.hero-location svg { color: #76e0bc; }
+.hero-live-dot, .hero-panel-location span { width: 6px; height: 6px; display: inline-block; border-radius: 50%; background: #75e6c0; box-shadow: 0 0 10px rgba(117, 230, 192, .55); }
+.hero-copy h1 { margin: 24px 0 0; color: #f1fff9; font-size: 50px; line-height: 1.08; font-weight: 800; letter-spacing: 0; }
+.hero-copy h1 span { color: #70dfbd; }
+.hero-description { max-width: 500px; margin: 20px 0 0; color: #9db9ae; font-size: 14px; line-height: 1.7; }
+.hero-actions { max-width: 510px; display: flex; flex-direction: column; gap: 11px; margin-top: 27px; }
+.hero-role { min-height: 74px; display: flex; align-items: center; gap: 13px; padding: 0 14px; border: 1px solid transparent; border-radius: 18px; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
+.hero-role:hover { transform: translateY(-2px); }
+.hero-role-passenger { background: linear-gradient(105deg, #aaf5d9, #67dcb7); color: #07382e; box-shadow: 0 11px 30px rgba(73, 216, 172, .12); }
+.hero-role-driver { min-height: 68px; border-color: rgba(120, 217, 186, .15); background: rgba(255, 255, 255, .045); color: #ecfaf4; }
+.hero-role-icon { width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(255, 255, 255, .48); }
+.hero-role-driver .hero-role-icon { color: #72dfbd; background: rgba(89, 201, 159, .13); }
+.hero-role-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.hero-role-copy strong { font-size: 12px; line-height: 1.3; font-weight: 900; letter-spacing: .5px; }
+.hero-role-copy small { color: rgba(11, 61, 48, .7); font-size: 10px; line-height: 1.4; }
+.hero-role-driver .hero-role-copy small { color: #9bb7ad; }
+.hero-role-arrow { width: 39px; height: 39px; flex: 0 0 39px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, .65); }
+.hero-driver-arrow { flex: 0 0 auto; color: #71dfbd; }
+.hero-trust-row { display: flex; flex-wrap: wrap; gap: 19px; margin-top: 19px; color: #83a79a; font-size: 8px; font-weight: 800; letter-spacing: .8px; }
+.hero-trust-row span { display: inline-flex; align-items: center; gap: 6px; }
+.hero-trust-row svg { color: #6bd6b2; }
+.hero-art-wrap { position: relative; min-height: 465px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 4px; }
+.hero-vehicle-panel { position: relative; z-index: 1; width: 300px; height: 326px; border: 1px solid rgba(220, 255, 241, .35); border-radius: 43px; background: linear-gradient(145deg, #9aefd0 0%, #69d3b0 68%, #46b995 100%); color: #064638; box-shadow: 0 26px 52px rgba(30, 194, 144, .18); transform: rotate(-4deg); }
+.hero-panel-location { position: absolute; top: 19px; left: 17px; display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: 18px; background: rgba(242, 255, 249, .82); color: #0a664e; font-size: 8px; font-weight: 900; letter-spacing: 1px; }
+.hero-panel-location span { width: 5px; height: 5px; background: #0b946d; box-shadow: none; }
+.hero-vehicle-orbit { position: absolute; top: 43px; left: 31px; width: 236px; height: 236px; display: grid; place-items: center; border-radius: 50%; background: rgba(235, 255, 247, .13); color: #064d3b; }
+.hero-vehicle-orbit svg { filter: drop-shadow(0 6px 4px rgba(0, 70, 51, .08)); }
+.hero-vehicle-road { position: absolute; bottom: 78px; left: 58px; width: 174px; height: 28px; border-radius: 30px; background: rgba(6, 105, 77, .28); }
+.hero-floating-note { position: absolute; right: -5px; bottom: 26px; display: flex; align-items: center; gap: 9px; padding: 9px 13px 9px 9px; border-radius: 17px; background: #f3fff9; color: #124a3b; box-shadow: 0 8px 20px rgba(0, 78, 57, .12); transform: rotate(1deg); }
+.hero-note-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 11px; background: #baf2dc; color: #08785a; }
+.hero-floating-note > span:last-child { display: flex; flex-direction: column; gap: 3px; }
+.hero-floating-note small { color: #638b7d; font-size: 7px; font-weight: 800; letter-spacing: .8px; }
+.hero-floating-note strong { font-size: 10px; }
+.hero-platform-shadow { position: absolute; left: 50%; top: 338px; width: 330px; height: 41px; border-radius: 50%; background: rgba(0, 9, 7, .48); filter: blur(2px); transform: translateX(-50%); }
+.hero-art-caption { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; margin-top: 31px; }
+.hero-art-caption span { color: #6fe0bb; font-size: 9px; font-weight: 900; letter-spacing: 2px; }
+.hero-art-caption strong { margin-top: 3px; color: #f0fff8; font-size: 30px; line-height: 1.05; font-weight: 900; letter-spacing: 1px; }
+.hero-art-caption small { margin-top: 7px; color: #84a99a; font-size: 10px; }
+
+.home-page .booking-section { background: #071f19; border-color: rgba(126, 231, 194, .13); color: #effbf6; }
+.home-page .section-marker { color: #8eada1; }
+.home-page .section-marker span:first-child { border-color: rgba(126, 231, 194, .25); color: #74dfbd; }
+.home-page .booking-heading h2 { color: #effbf6; }
+.home-page .booking-heading p { color: #9bb5aa; }
+.home-page .booking-fields { border-color: rgba(126, 231, 194, .18); }
+.home-page .booking-field { background: #0b2a21; }
+.home-page .booking-field + .booking-field { border-color: rgba(126, 231, 194, .18); }
+.home-page .booking-field input { color: #effbf6; }
+.home-page .booking-field input::placeholder { color: #79978b; }
+.home-page .field-label { color: #91afa3; }
+.home-page .location-action { border-color: rgba(126, 231, 194, .16); background: #12372b; color: #80e3bf; }
+.home-page .stepper button { border-color: rgba(126, 231, 194, .22); background: #0b2a21; color: #80e3bf; }
+.home-page .stepper span, .home-page .vehicle-indicator strong { color: #effbf6; }
+.home-page .vehicle-icon { background: #12372b; color: #80e3bf; }
+.home-page .booking-fineprint { color: #91afa3; }
+.home-page .driver-invite { border-color: rgba(126, 231, 194, .13); }
+.home-page .driver-invite h2 { color: #effbf6; }
+.home-page .driver-invite p:last-child { color: #91afa3; }
+.home-page .driver-invite-link { border-color: rgba(126, 231, 194, .24); color: #80e3bf; }
+.home-page .driver-invite-link:hover { background: #0b2a21; }
+.home-page .discover-section { padding-right: max(32px, calc((100% - 1240px) / 2)); padding-left: max(32px, calc((100% - 1240px) / 2)); background: var(--paper); color: var(--ink); }
+.home-page .discover-head, .home-page .feature-destinations { width: min(1240px, 100%); margin-right: auto; margin-left: auto; }
+
+@media (max-width: 900px) {
+  .site-header-home .primary-nav { left: 20px; right: 20px; transform: none; }
+  .home-hero-inner { width: min(100% - 40px, 700px); grid-template-columns: 1.04fr .96fr; gap: 12px; }
+  .hero-copy h1 { font-size: 42px; }
+  .hero-vehicle-panel { width: 260px; height: 292px; }
+  .hero-vehicle-orbit { left: 27px; width: 205px; height: 205px; }
+  .hero-platform-shadow { top: 320px; width: 285px; }
+  .home-page .discover-section { padding-right: 20px; padding-left: 20px; }
+}
+
+@media (max-width: 620px) {
+  .site-header-home .header-inner { width: calc(100% - 28px); height: 62px; }
+  .site-header-home .brand-icon { width: 41px; height: 41px; }
+  .site-header-home .primary-nav { top: 61px; }
+  .home-hero { min-height: 0; }
+  .home-hero-inner { width: 100%; min-height: 0; display: flex; flex-direction: column; align-items: stretch; gap: 11px; padding: 35px 16px 28px; }
+  .hero-copy h1 { margin-top: 18px; font-size: 39px; }
+  .hero-description { margin-top: 14px; font-size: 12px; }
+  .hero-actions { margin-top: 20px; }
+  .hero-role { min-height: 66px; border-radius: 15px; }
+  .hero-role-driver { min-height: 62px; }
+  .hero-role-icon { width: 40px; height: 40px; flex-basis: 40px; border-radius: 12px; }
+  .hero-role-copy strong { font-size: 10px; }
+  .hero-role-copy small { font-size: 9px; }
+  .hero-role-arrow { width: 34px; height: 34px; flex-basis: 34px; }
+  .hero-trust-row { gap: 11px; margin-top: 14px; font-size: 7px; }
+  .hero-art-wrap { min-height: 385px; margin-top: 3px; }
+  .hero-vehicle-panel { width: 256px; height: 276px; border-radius: 36px; }
+  .hero-vehicle-orbit { top: 43px; left: 27px; width: 200px; height: 200px; }
+  .hero-vehicle-orbit svg { width: 92px; height: 92px; }
+  .hero-vehicle-road { bottom: 64px; left: 49px; width: 157px; }
+  .hero-floating-note { right: -7px; bottom: 19px; }
+  .hero-platform-shadow { top: 284px; width: 280px; }
+  .hero-art-caption { margin-top: 29px; }
+  .hero-art-caption strong { font-size: 26px; }
+  .home-page .booking-section { padding: 28px 0 30px; }
+  .home-page .section-marker, .home-page .booking-layout, .home-page .driver-invite { width: calc(100% - 32px); }
+  .home-page .driver-invite { min-height: 0; }
+  .home-page .discover-section { padding: 48px 16px 60px; }
+}

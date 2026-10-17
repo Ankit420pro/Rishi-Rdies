@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
+  BusFront,
   ChevronDown,
   Compass,
   LocateFixed,
@@ -11,9 +12,10 @@ import {
   Search,
   ShieldCheck,
   X,
+  UserRound,
 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Destination, destinations } from './data/destinations';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
@@ -45,25 +47,23 @@ export default function App() {
 
 function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const isHome = useLocation().pathname === '/';
   const links = [
-    { to: '/', label: 'Book a ride', end: true },
-    { to: '/destinations', label: 'Places', end: false },
-    { to: '/services', label: 'Services', end: false },
-    { to: '/faqs', label: 'FAQs', end: false },
+    { to: '/sign-up?role=passenger', label: 'Passenger', end: false },
+    { to: '/sign-up?role=driver', label: 'Driver', end: false },
   ];
   return (
-    <header className="site-header">
+    <header className={`site-header${isHome ? ' site-header-home' : ''}`}>
       <div className="header-inner">
         <Link to="/" className="brand" aria-label="RishiRide home">
-          <span className="brand-icon"><Navigation size={20} strokeWidth={2.7} /></span>
-          <span className="brand-word">Rishi<span>Ride</span></span>
-          <span className="brand-city">RISHIKESH</span>
+          <span className="brand-icon"><BusFront size={21} strokeWidth={2.5} /></span>
+          <span className="brand-word brand-stack"><span>RISHI</span><span>RIDES</span></span>
         </Link>
         <button className="mobile-menu-button icon-button" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <nav className={`primary-nav ${menuOpen ? 'nav-open' : ''}`} aria-label="Main navigation">
-          {links.map((link) => <NavLink key={link.to} to={link.to} end={link.end} onClick={() => setMenuOpen(false)}>{link.label}</NavLink>)}
+          {links.map((link) => <Link key={link.to} to={link.to} onClick={() => setMenuOpen(false)}>{link.label}</Link>)}
           <div className="nav-account">
             <Link to="/sign-in" className="nav-sign-in">Sign in</Link>
             <Link to="/sign-up" className="nav-join">Join RishiRide <ArrowUpRight size={14} /></Link>
@@ -76,18 +76,37 @@ function SiteHeader() {
 
 function HomePage() {
   return (
-    <div className="page-wrap home-page">
-      <section className="home-intro">
-        <div className="intro-copy">
-          <p className="eyebrow"><span className="eyebrow-line" /> RISHIKESH, UTTARAKHAND</p>
-          <h1>Find your way<br /><em>through the valley.</em></h1>
-          <p className="intro-deck">A local ride, beginning with a clear pickup and a place to go.</p>
-          <div className="intro-foot"><span className="intro-mark">01</span><span>RISHI RIDE · LOCAL JOURNEYS</span><span className="intro-rule" /></div>
-        </div>
-        <div className="intro-art" aria-label="Photograph of Triveni Ghat in Rishikesh">
-          <img src={destinations[0].photoUrl ?? ''} alt="Evening lamps at Triveni Ghat, Rishikesh" />
-          <a className="photo-credit" href={destinations[0].photoSource ?? '#'} target="_blank" rel="noreferrer">TRIVENI GHAT <ArrowUpRight size={12} /></a>
-          <div className="art-stamp"><span>30°</span><span>RISHIKESH</span></div>
+    <div className="home-page">
+      <section className="home-hero">
+        <div className="home-hero-inner">
+          <div className="hero-copy">
+            <p className="hero-location"><span className="hero-live-dot" /><MapPin size={14} /> RISHIKESH · UTTARAKHAND</p>
+            <h1>YOUR RIDE.<br /><span>YOUR JOURNEY.</span></h1>
+            <p className="hero-description">Move through Rishikesh with a ride experience designed to feel simple and local.</p>
+            <div className="hero-actions">
+              <Link className="hero-role hero-role-passenger" to="/sign-up?role=passenger">
+                <span className="hero-role-icon"><UserRound size={21} /></span>
+                <span className="hero-role-copy"><strong>I NEED A RIDE</strong><small>Find a comfortable ride around Rishikesh</small></span>
+                <span className="hero-role-arrow"><ArrowRight size={19} /></span>
+              </Link>
+              <Link className="hero-role hero-role-driver" to="/sign-up?role=driver">
+                <span className="hero-role-icon"><Navigation size={21} /></span>
+                <span className="hero-role-copy"><strong>I WANT TO DRIVE</strong><small>Begin driver registration in four steps</small></span>
+                <ArrowRight className="hero-driver-arrow" size={19} />
+              </Link>
+            </div>
+            <div className="hero-trust-row"><span><ShieldCheck size={15} /> PHONE VERIFIED</span><span><BusFront size={15} /> LOCAL RIDES</span><span><MapPin size={15} /> RISHIKESH</span></div>
+          </div>
+          <div className="hero-art-wrap" aria-label="RishiRides local vehicle illustration">
+            <div className="hero-platform-shadow" />
+            <div className="hero-vehicle-panel">
+              <div className="hero-panel-location"><span /> RISHIKESH</div>
+              <div className="hero-vehicle-orbit"><BusFront size={112} strokeWidth={1.7} /></div>
+              <div className="hero-vehicle-road" />
+              <div className="hero-floating-note"><span className="hero-note-icon"><Navigation size={17} /></span><span><small>READY TO MOVE</small><strong>Explore Rishikesh</strong></span></div>
+            </div>
+            <div className="hero-art-caption"><span>MOVE AROUND</span><strong>RISHIKESH</strong><small>One place to begin your local journey.</small></div>
+          </div>
         </div>
       </section>
 
