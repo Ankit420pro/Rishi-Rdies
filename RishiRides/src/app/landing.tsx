@@ -89,10 +89,12 @@ export default function LandingScreen() {
 
           {desktop && (
             <View style={styles.nav}>
-              <Text style={styles.navActive}>HOME</Text>
-              <Text style={styles.navText}>ABOUT</Text>
-              <Text style={styles.navText}>SERVICES</Text>
-              <Text style={styles.navText}>CONTACT</Text>
+              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/signup', params: { role: 'passenger' } })}>
+                <Text style={styles.navActive}>PASSENGER</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/signup', params: { role: 'driver' } })}>
+                <Text style={styles.navText}>DRIVER</Text>
+              </Pressable>
             </View>
           )}
 
@@ -108,7 +110,7 @@ export default function LandingScreen() {
 
             <Pressable
               style={styles.signupButton}
-              onPress={() => router.push('/signup')}
+              onPress={() => router.push({ pathname: '/signup', params: { role: 'passenger' } })}
             >
               <Text style={styles.signupText}>SIGN UP</Text>
             </Pressable>
@@ -158,8 +160,7 @@ export default function LandingScreen() {
             </Text>
 
             <Text style={styles.heroDescription}>
-              Move through Rishikesh with a ride experience
-              designed to feel safe, simple and peaceful.
+              Create a passenger account or start driver registration. Ride booking opens once dispatch, maps and driver review are ready.
             </Text>
 
             {/* CTA CARDS */}
@@ -170,7 +171,7 @@ export default function LandingScreen() {
               <Pressable
                 style={styles.passengerButton}
                 onPress={() =>
-                  router.push({ pathname: '/login', params: { role: 'passenger' } })
+                  router.push({ pathname: '/signup', params: { role: 'passenger' } })
                 }
               >
                 <LinearGradient
@@ -210,7 +211,7 @@ export default function LandingScreen() {
               <Pressable
                 style={styles.driverButton}
                 onPress={() =>
-                  router.push({ pathname: '/login', params: { role: 'driver' } })
+                  router.push({ pathname: '/signup', params: { role: 'driver' } })
                 }
               >
                 <View style={styles.driverInner}>
@@ -246,17 +247,17 @@ export default function LandingScreen() {
             <View style={styles.trustRow}>
               <TrustItem
                 icon="shield-check"
-                text="Safe"
+                text="Phone-verified"
               />
 
               <TrustItem
                 icon="clock-fast"
-                text="Reliable"
+                text="Simple"
               />
 
               <TrustItem
-                icon="cash"
-                text="Fair"
+                icon="account-multiple"
+                text="Two roles"
               />
 
               <TrustItem
@@ -344,26 +345,26 @@ export default function LandingScreen() {
               RISHIKESH
             </Text>
 
-            <Text style={styles.rightDescription}>
-              One peaceful platform for passengers and drivers.
+              <Text style={styles.rightDescription}>
+                One starting point for passenger signup and driver registration.
             </Text>
 
             {/* STATS */}
 
             <View style={styles.statsRow}>
               <Stat
-                number="24/7"
-                label="AVAILABLE"
+                number="01"
+                label="LOCAL CITY"
               />
 
               <Stat
-                number="100%"
-                label="LOCAL"
+                number="02"
+                label="RIDE ROLES"
               />
 
               <Stat
-                number="₹"
-                label="FAIR FARES"
+                number="OTP"
+                label="PHONE SIGN-IN"
               />
             </View>
           </View>
@@ -381,7 +382,7 @@ export default function LandingScreen() {
           </Text>
 
           <Text style={styles.sectionDescription}>
-            Everything you need for simple local transportation.
+            Clear entry points for riders and local drivers, with phone verification before account access.
           </Text>
 
           <View
@@ -393,19 +394,19 @@ export default function LandingScreen() {
             <FeatureCard
               icon="account"
               title="For Passengers"
-              text="Find convenient rides and travel comfortably around beautiful Rishikesh."
+              text="Create an account with your name, verified phone, language and consent."
             />
 
             <FeatureCard
               icon="steering"
               title="For Drivers"
-              text="Drive when you want and earn from rides around the city."
+              text="Review the four onboarding stages before document submission is enabled."
             />
 
             <FeatureCard
               icon="shield-check"
-              title="Safe & Reliable"
-              text="A trusted experience designed for peaceful local transportation."
+              title="Verified access"
+              text="Phone codes use the configured provider; development codes stay development-only."
             />
           </View>
         </View>
@@ -425,7 +426,7 @@ export default function LandingScreen() {
 
           <Pressable
             style={styles.bottomButton}
-            onPress={() => router.push('/login')}
+            onPress={() => router.push({ pathname: '/signup', params: { role: 'passenger' } })}
           >
             <Text style={styles.bottomButtonText}>
               GET STARTED

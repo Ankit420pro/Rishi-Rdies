@@ -7,7 +7,10 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default('1h'),
   DEV_OTP_SIMULATOR: z.enum(['true', 'false']).default('false'),
-  OTP_PROVIDER: z.string().default('unconfigured'),
+  OTP_PROVIDER: z.enum(['unconfigured', 'twilio-verify']).default('unconfigured'),
+  TWILIO_ACCOUNT_SID: z.string().optional(),
+  TWILIO_AUTH_TOKEN: z.string().optional(),
+  TWILIO_VERIFY_SERVICE_SID: z.string().optional(),
   CLIENT_ORIGIN: z.string().url().default('http://localhost:8081'),
 });
 
@@ -16,14 +19,21 @@ if (!parsed.success) {
   throw new Error(`Invalid server configuration: ${z.treeifyError(parsed.error).errors.join('; ')}`);
 }
 
-if (parsed.data.NODE_ENV === 'production' && parsed.data.OTP_PROVIDER === 'unconfigured') {
-  throw new Error('OTP_PROVIDER must be configured in production.');
+if (parsed.data.NODE_ENV === 'production' && parsed.data.OTP_PROVIDER !== 'twilio-verify') {
+  throw new Error('A production OTP provider must be configured.');
 }
 if (parsed.data.NODE_ENV !== 'development' && parsed.data.DEV_OTP_SIMULATOR === 'true') {
   throw new Error('The development OTP simulator is only allowed in development.');
+}
+if (parsed.data.OTP_PROVIDER === 'twilio-verify' && (!parsed.data.TWILIO_ACCOUNT_SID || !parsed.data.TWILIO_AUTH_TOKEN || !parsed.data.TWILIO_VERIFY_SERVICE_SID)) {
+  throw new Error('Twilio Verify requires its account SID, auth token, and service SID.');
+}
+if (parsed.data.DEV_OTP_SIMULATOR === 'true' && parsed.data.OTP_PROVIDER === 'twilio-verify') {
+  throw new Error('Choose either the development OTP simulator or Twilio Verify, not both.');
 }
 
 export const config = {
   ...parsed.data,
   developmentOtpEnabled: parsed.data.NODE_ENV === 'development' && parsed.data.DEV_OTP_SIMULATOR === 'true',
+  otpDeliveryConfigured: parsed.data.OTP_PROVIDER === 'twilio-verify' || (parsed.data.NODE_ENV === 'development' && parsed.data.DEV_OTP_SIMULATOR === 'true'),
 };

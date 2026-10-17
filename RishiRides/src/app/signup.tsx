@@ -1,6 +1,6 @@
 
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -13,20 +13,24 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { loginUser } from '../api/login';
+import { signupUser } from '../api/signup';
 import { RishiColors } from '../constants/theme';
 
 type UserRole = 'passenger' | 'driver';
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { role: initialRole } = useLocalSearchParams<{ role?: string }>();
 
-  const [role, setRole] =
-    useState<UserRole>('passenger');
+  const [role, setRole] = useState<UserRole>(initialRole === 'driver' ? 'driver' : 'passenger');
 
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'hi'>('en');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const hindi = preferredLanguage === 'hi';
 
   const handleSignup = async () => {
     const cleanMobile = mobile.replace(/\D/g, '');
@@ -45,13 +49,23 @@ export default function SignupScreen() {
       );
       return;
     }
+    if (!termsAccepted || !privacyAccepted) {
+      Alert.alert(
+        hindi ? 'सहमति आवश्यक है' : 'Consent required',
+        hindi ? 'आगे बढ़ने के लिए दोनों नीतियों को स्वीकार करें।' : 'Accept both policies before continuing.'
+      );
+      return;
+    }
 
     try {
       setLoading(true);
-      const response = await loginUser({
+      const response = await signupUser({
         mobile: cleanMobile,
         role,
         name: name.trim(),
+        preferredLanguage,
+        termsAccepted: true,
+        privacyAccepted: true,
       });
       router.push({
         pathname: '/otp',
@@ -60,6 +74,7 @@ export default function SignupScreen() {
           role: response.role,
           sessionId: response.sessionId,
           developmentOtp: response.developmentOtp ?? '',
+          preferredLanguage,
         },
       });
     } catch (error) {
@@ -115,17 +130,17 @@ export default function SignupScreen() {
           </Text>
 
           <Text style={styles.title}>
-            Create Account
+            {hindi ? 'खाता बनाएँ' : 'Create account'}
           </Text>
 
           <Text style={styles.subtitle}>
-            Join RishiRides today
+            {hindi ? 'RishiRides से जुड़ें' : 'Your number, verified before you ride'}
           </Text>
 
           {/* ROLE */}
 
           <Text style={styles.roleLabel}>
-            CREATE ACCOUNT AS
+            {hindi ? 'खाता किसके लिए है' : 'CREATE ACCOUNT AS'}
           </Text>
 
           <View style={styles.roleContainer}>
@@ -138,6 +153,8 @@ export default function SignupScreen() {
                 role === 'passenger' &&
                   styles.roleButtonActive,
               ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: role === 'passenger' }}
               onPress={() =>
                 setRole('passenger')
               }
@@ -167,7 +184,7 @@ export default function SignupScreen() {
                     styles.roleTextActive,
                 ]}
               >
-                PASSENGER
+                {hindi ? 'यात्री' : 'PASSENGER'}
               </Text>
 
               {role === 'passenger' && (
@@ -188,6 +205,8 @@ export default function SignupScreen() {
                 role === 'driver' &&
                   styles.roleButtonActive,
               ]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: role === 'driver' }}
               onPress={() =>
                 setRole('driver')
               }
@@ -217,7 +236,7 @@ export default function SignupScreen() {
                     styles.roleTextActive,
                 ]}
               >
-                DRIVER
+                {hindi ? 'ड्राइवर' : 'DRIVER'}
               </Text>
 
               {role === 'driver' && (
@@ -235,7 +254,7 @@ export default function SignupScreen() {
 
           <Input
             icon="account"
-            placeholder="Full name"
+            placeholder={hindi ? 'पूरा नाम' : 'Full legal name'}
             value={name}
             onChangeText={setName}
           />
@@ -244,20 +263,57 @@ export default function SignupScreen() {
 
           <Input
             icon="phone"
-            placeholder="Mobile number"
+            placeholder={hindi ? 'मोबाइल नंबर' : '10-digit mobile number'}
             value={mobile}
             onChangeText={setMobile}
             keyboardType="phone-pad"
             maxLength={10}
           />
 
+          <Text style={styles.optionLabel}>{hindi ? 'पसंदीदा भाषा' : 'PREFERRED LANGUAGE'}</Text>
+          <View style={styles.languageControl}>
+            {(['hi', 'en'] as const).map((language) => (
+              <Pressable
+                key={language}
+                accessibilityRole="button"
+                accessibilityState={{ selected: preferredLanguage === language }}
+                style={[styles.languageOption, preferredLanguage === language && styles.languageOptionActive]}
+                onPress={() => setPreferredLanguage(language)}
+              >
+                <Text style={[styles.languageText, preferredLanguage === language && styles.languageTextActive]}>
+                  {language === 'hi' ? 'हिन्दी' : 'English'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <View style={styles.policyLinks}>
+            <Pressable accessibilityRole="link" onPress={() => router.push({ pathname: '/legal', params: { document: 'terms', language: preferredLanguage } })}>
+              <Text style={styles.policyLink}>{hindi ? 'सेवा शर्तें पढ़ें' : 'Read Terms of Service'}</Text>
+            </Pressable>
+            <Pressable accessibilityRole="link" onPress={() => router.push({ pathname: '/legal', params: { document: 'privacy', language: preferredLanguage } })}>
+              <Text style={styles.policyLink}>{hindi ? 'गोपनीयता नीति पढ़ें' : 'Read Privacy Policy'}</Text>
+            </Pressable>
+          </View>
+
+          <ConsentRow
+            checked={termsAccepted}
+            onPress={() => setTermsAccepted((value) => !value)}
+            label={hindi ? 'मैं RishiRides की सेवा शर्तों से सहमत हूँ।' : 'I agree to the RishiRides Terms of Service.'}
+          />
+          <ConsentRow
+            checked={privacyAccepted}
+            onPress={() => setPrivacyAccepted((value) => !value)}
+            label={hindi ? 'मैं गोपनीयता नीति पढ़कर स्वीकार करता/करती हूँ।' : 'I have read and accept the Privacy Policy.'}
+          />
+
           <Pressable
-            style={[styles.signupButton, loading && styles.disabledButton]}
+            style={[styles.signupButton, (loading || !termsAccepted || !privacyAccepted) && styles.disabledButton]}
             onPress={handleSignup}
-            disabled={loading}
+            disabled={loading || !termsAccepted || !privacyAccepted}
           >
             <Text style={styles.signupButtonText}>
-              {loading ? 'SENDING CODE...' : 'CONTINUE WITH PHONE'}
+              {loading ? (hindi ? 'कोड भेज रहे हैं...' : 'SENDING CODE...') : (hindi ? 'मोबाइल सत्यापित करें' : 'VERIFY MOBILE NUMBER')}
             </Text>
 
             {!loading && <MaterialCommunityIcons name="arrow-right" size={20} color={RishiColors.background} />}
@@ -267,7 +323,7 @@ export default function SignupScreen() {
 
           <View style={styles.loginRow}>
             <Text style={styles.loginText}>
-              Already have an account?
+              {hindi ? 'पहले से खाता है?' : 'Already have an account?'}
             </Text>
 
             <Pressable
@@ -284,6 +340,22 @@ export default function SignupScreen() {
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function ConsentRow({ checked, label, onPress }: { checked: boolean; label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      style={styles.consentRow}
+      onPress={onPress}
+    >
+      <View style={[styles.checkbox, checked && styles.checkboxActive]}>
+        {checked && <MaterialCommunityIcons name="check" size={15} color={RishiColors.background} />}
+      </View>
+      <Text style={styles.consentText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -454,6 +526,19 @@ const styles = StyleSheet.create({
     top: 7,
     right: 7,
   },
+
+  optionLabel: { color: RishiColors.muted, fontSize: 10, fontWeight: '900', marginBottom: 8 },
+  languageControl: { flexDirection: 'row', backgroundColor: RishiColors.surface, borderWidth: 1, borderColor: RishiColors.line, borderRadius: 11, padding: 4, marginBottom: 14 },
+  languageOption: { flex: 1, minHeight: 42, alignItems: 'center', justifyContent: 'center', borderRadius: 8 },
+  languageOptionActive: { backgroundColor: RishiColors.mint },
+  languageText: { color: RishiColors.muted, fontSize: 13, fontWeight: '800' },
+  languageTextActive: { color: RishiColors.background },
+  policyLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 6 },
+  policyLink: { color: RishiColors.mint, fontSize: 11, fontWeight: '800', paddingVertical: 5 },
+  consentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 11, paddingVertical: 9 },
+  checkbox: { width: 22, height: 22, borderWidth: 1, borderColor: RishiColors.line, borderRadius: 5, alignItems: 'center', justifyContent: 'center' },
+  checkboxActive: { backgroundColor: RishiColors.mint, borderColor: RishiColors.mint },
+  consentText: { flex: 1, color: RishiColors.muted, fontSize: 12, lineHeight: 18 },
 
   inputContainer: {
     height: 55,

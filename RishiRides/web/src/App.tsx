@@ -13,7 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { FormEvent, useState } from 'react';
-import { Link, NavLink, Route, Routes, useParams } from 'react-router-dom';
+import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Destination, destinations } from './data/destinations';
 
 const apiBase = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '');
@@ -29,11 +29,12 @@ export default function App() {
           <Route path="/destinations/:slug" element={<DestinationPage />} />
           <Route path="/sign-in" element={<AccountPage mode="sign-in" />} />
           <Route path="/sign-up" element={<AccountPage mode="sign-up" />} />
+          <Route path="/verify" element={<VerifyPage />} />
           <Route path="/about" element={<InfoPage title="About RishiRide" eyebrow="LOCAL BY NATURE" body="A locally focused way to plan a ride across Rishikesh. We are building the service around clear information, fair choices, and respectful travel." />} />
           <Route path="/services" element={<InfoPage title="Rides around Rishikesh" eyebrow="OUR SERVICE" body="RishiRide is being prepared for local passenger trips with e-rickshaws for groups of up to three and CNG auto-rickshaws for larger groups. Booking and route services are not available until securely connected." />} />
           <Route path="/faqs" element={<FaqPage />} />
-          <Route path="/terms" element={<InfoPage title="Terms" eyebrow="THE DETAILS" body="Terms will be published before ride bookings are enabled. No booking can be made from this preview." />} />
-          <Route path="/privacy" element={<InfoPage title="Privacy" eyebrow="YOUR INFORMATION" body="This preview does not submit a ride request or store account credentials. Location access is requested only when you choose to use your current location." />} />
+          <Route path="/terms" element={<InfoPage title="Terms" eyebrow="PRE-LAUNCH DRAFT" body="RishiRide currently supports account registration and phone verification only. Ride booking, fares, payments and driver dispatch are not active, and no ride request is sent. Drivers cannot go online before applicable documents and administrator review are approved. These draft terms require legal review for the launch jurisdiction before live use." />} />
+          <Route path="/privacy" element={<InfoPage title="Privacy" eyebrow="PRE-LAUNCH DRAFT" body="Signup stores your name, mobile number, preferred language and consent timestamps on the account service. The SMS provider receives your phone number to deliver and verify codes. Raw OTPs are not stored by the app. Ordinary passenger signup does not request a driving licence or Aadhaar. Location is requested only when you choose current location; this preview does not submit a ride request or persist browser auth tokens. Retention, deletion and jurisdiction-specific data handling require legal review before launch." />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
@@ -99,6 +100,12 @@ function HomePage() {
           </div>
           <BookingForm />
         </div>
+      </section>
+
+      <section className="driver-invite" aria-label="Driver registration">
+        <div className="driver-invite-mark"><Navigation size={18} /></div>
+        <div><p className="eyebrow">DRIVE WITH RISHIRIDE</p><h2>Local drivers start here.</h2><p>Register by phone, then review the four onboarding stages. Document upload stays disabled until private review is ready.</p></div>
+        <Link className="driver-invite-link" to="/sign-up?role=driver">Driver registration <ArrowRight size={16} /></Link>
       </section>
 
       <section className="discover-section">
@@ -179,7 +186,7 @@ function BookingForm() {
         </label>
         <label className="booking-field">
           <span className="field-symbol drop-symbol" aria-hidden="true" />
-          <span className="field-copy"><span className="field-label">DESTINATION</span><input value={dropoff} onChange={(event) => setDropoff(event.target.value)} placeholder="Where do you want to go?" autoComplete="off" /></span>
+          <span className="field-copy"><span className="field-label">DESTINATION</span><input list="rishiride-destinations" value={dropoff} onChange={(event) => setDropoff(event.target.value)} placeholder="Where do you want to go?" autoComplete="off" /><datalist id="rishiride-destinations">{destinations.map((place) => <option key={place.slug} value={place.name} />)}</datalist></span>
           <ChevronDown size={18} className="field-chevron" />
         </label>
       </div>
@@ -214,15 +221,17 @@ function DestinationsPage() {
 
 function DestinationCard({ destination, index }: { destination: Destination; index: number }) {
   return (
-    <Link className={`destination-card destination-card-${index % 3}`} to={`/destinations/${destination.slug}`}>
-      <div className="destination-image">
-        {destination.photoUrl ? <img src={destination.photoUrl} alt={`${destination.name}, Rishikesh`} loading="lazy" /> : <div className="image-empty"><Compass size={25} /><span>PHOTO NOT AVAILABLE</span></div>}
-        <span className="photo-number">{String(index + 1).padStart(2, '0')}</span>
-        <span className="card-open"><ArrowUpRight size={17} /></span>
-      </div>
-      <div className="destination-card-copy"><div><span className="category-label">{destination.category}</span><h2>{destination.name}</h2></div><span className="location-status">{destination.latitude !== null ? <><MapPin size={13} /> PIN VERIFIED</> : 'DETAILS PENDING'}</span></div>
-      {destination.photoSource && <span className="image-source" onClick={(event) => event.preventDefault()}><a href={destination.photoSource} target="_blank" rel="noreferrer" aria-label={`View image source: ${destination.photoSourceName}`}>IMAGE SOURCE · COMMONS</a></span>}
-    </Link>
+    <article className={`destination-card destination-card-${index % 3}`}>
+      <Link to={`/destinations/${destination.slug}`} aria-label={`${destination.name}, ${destination.category}`}>
+        <div className="destination-image">
+          {destination.photoUrl ? <img src={destination.photoUrl} alt={`${destination.name}, Rishikesh`} loading="lazy" /> : <div className="image-empty"><Compass size={25} /><span>PHOTO NOT AVAILABLE</span></div>}
+          <span className="photo-number">{String(index + 1).padStart(2, '0')}</span>
+          <span className="card-open"><ArrowUpRight size={17} /></span>
+        </div>
+        <div className="destination-card-copy"><div><span className="category-label">{destination.category}</span><h2>{destination.name}</h2></div><span className="location-status">{destination.latitude !== null ? <><MapPin size={13} /> PIN VERIFIED</> : 'DETAILS PENDING'}</span></div>
+      </Link>
+      {destination.photoSource && <a className="image-source" href={destination.photoSource} target="_blank" rel="noreferrer" aria-label={`View image source: ${destination.photoSourceName}`}>IMAGE SOURCE · COMMONS</a>}
+    </article>
   );
 }
 
@@ -241,21 +250,201 @@ function DestinationPage() {
   );
 }
 
+type WebOtpState = {
+  mode: 'sign-in' | 'sign-up';
+  role: 'passenger' | 'driver';
+  mobile: string;
+  sessionId: string;
+  developmentOtp?: string;
+  preferredLanguage: 'en' | 'hi';
+};
+
+async function readApiError(response: Response, fallback: string): Promise<string> {
+  try {
+    const payload: unknown = await response.json();
+    if (typeof payload === 'object' && payload !== null && 'error' in payload && typeof payload.error === 'object' && payload.error !== null && 'message' in payload.error && typeof payload.error.message === 'string') {
+      return payload.error.message;
+    }
+  } catch {
+    return fallback;
+  }
+  return fallback;
+}
+
 function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
-  const [role, setRole] = useState<'passenger' | 'driver'>('passenger');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [role, setRole] = useState<'passenger' | 'driver'>(searchParams.get('role') === 'driver' ? 'driver' : 'passenger');
+  const [name, setName] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'hi'>('en');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const isSignUp = mode === 'sign-up';
   const roleName = role === 'passenger' ? 'Passenger' : 'Driver';
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setMessage(apiBase
-      ? 'Authentication endpoint is not configured in this preview. No account action was taken.'
-      : 'Account access is unavailable because secure authentication is not configured. No credentials were sent or stored.');
+    setMessage('');
+    if (!apiBase) {
+      setMessage('Phone verification is not configured for this web build. No account was created and no code was sent.');
+      return;
+    }
+    if (isSignUp && (!termsAccepted || !privacyAccepted)) {
+      setMessage('Accept both the Terms of Service and Privacy Policy to create an account.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/auth/${isSignUp ? 'signup' : 'login'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isSignUp
+          ? { name: name.trim(), mobile, role, preferredLanguage, termsAccepted: true, privacyAccepted: true }
+          : { mobile, role }),
+      });
+      if (!response.ok) throw new Error(await readApiError(response, 'Unable to start phone verification.'));
+      const payload: unknown = await response.json();
+      if (typeof payload !== 'object' || payload === null || !('sessionId' in payload) || typeof payload.sessionId !== 'string' || !payload.sessionId || !('mobile' in payload) || typeof payload.mobile !== 'string' || !('role' in payload) || (payload.role !== 'passenger' && payload.role !== 'driver')) {
+        throw new Error('The authentication service returned an invalid verification session.');
+      }
+      navigate('/verify', { state: {
+        mode,
+        role: payload.role,
+        mobile: payload.mobile,
+        sessionId: payload.sessionId,
+        preferredLanguage,
+        ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}),
+      } satisfies WebOtpState });
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to start phone verification.');
+    } finally {
+      setLoading(false);
+    }
   };
+
   return (
     <div className="account-page">
-      <div className="account-aside"><Link to="/" className="brand brand-light"><span className="brand-icon"><Navigation size={20} /></span><span className="brand-word">Rishi<span>Ride</span></span></Link><div className="account-aside-copy"><span>RISHIKESH, INDIA</span><p>Take the road<br /><em>that feels like yours.</em></p><small>Local journeys begin with a good first step.</small></div><div className="account-aside-image"><img src={destinations[3].photoUrl ?? ''} alt="Ram Jhula footbridge over the Ganges" /></div></div>
-      <section className="account-content"><Link to="/" className="back-link"><ArrowLeft size={15} /> Back to booking</Link><div className="account-form-wrap"><p className="eyebrow">{isSignUp ? 'COME ON IN' : 'WELCOME BACK'}</p><h1>{isSignUp ? 'Create your account.' : 'Good to see you.'}</h1><p className="account-subtitle">Choose how you use RishiRide.</p><div className="role-toggle" role="group" aria-label="Account type"><button className={role === 'passenger' ? 'selected' : ''} onClick={() => setRole('passenger')}><span className="role-initial">P</span> Passenger</button><button className={role === 'driver' ? 'selected' : ''} onClick={() => setRole('driver')}><span className="role-initial">D</span> Driver</button></div><form className="account-form" onSubmit={submit}>{isSignUp && <label>Your name<input required autoComplete="name" placeholder="Name as you’d like to be known" /></label>}<label>Email address<input required type="email" autoComplete="email" placeholder="you@example.com" /></label><label>Password<input required type="password" autoComplete={isSignUp ? 'new-password' : 'current-password'} minLength={8} placeholder="At least 8 characters" /></label>{isSignUp && <label className="consent-check"><input type="checkbox" required /><span>I agree to the <Link to="/terms">Terms</Link> and <Link to="/privacy">Privacy Policy</Link>.</span></label>}{message && <p className="form-notice account-notice" role="alert">{message}</p>}<button className="account-submit" type="submit">{isSignUp ? `Create ${roleName.toLowerCase()} account` : `Sign in as ${roleName.toLowerCase()}`}<ArrowRight size={16} /></button></form><p className="switch-account">{isSignUp ? 'Already registered?' : 'New to RishiRide?'} <Link to={isSignUp ? '/sign-in' : '/sign-up'}>{isSignUp ? 'Sign in' : 'Create an account'}</Link></p><p className="auth-privacy"><ShieldCheck size={14} /> Your credentials are not stored by this preview.</p></div></section>
+      <div className="account-aside">
+        <Link to="/" className="brand brand-light"><span className="brand-icon"><Navigation size={20} /></span><span className="brand-word">Rishi<span>Ride</span></span></Link>
+        <div className="account-aside-copy"><span>RISHIKESH, INDIA</span><p>Local journeys,<br /><em>one clear step at a time.</em></p><small>Phone verification is required before account access.</small></div>
+        <div className="account-aside-image"><img src={destinations[3].photoUrl ?? ''} alt="Ram Jhula footbridge over the Ganges" /></div>
+      </div>
+      <section className="account-content">
+        <Link to="/" className="back-link"><ArrowLeft size={15} /> Back to RishiRide</Link>
+        <div className="account-form-wrap">
+          <p className="eyebrow">{isSignUp ? 'CREATE AN ACCOUNT' : 'WELCOME BACK'}</p>
+          <h1>{isSignUp ? 'Start with your phone.' : 'Sign in with your phone.'}</h1>
+          <p className="account-subtitle">We’ll send a one-time code by SMS. No password needed.</p>
+          <div className="role-toggle" role="group" aria-label="Account type">
+            <button type="button" className={role === 'passenger' ? 'selected' : ''} onClick={() => setRole('passenger')}><span className="role-initial">P</span> Passenger</button>
+            <button type="button" className={role === 'driver' ? 'selected' : ''} onClick={() => setRole('driver')}><span className="role-initial">D</span> Driver</button>
+          </div>
+          <form className="account-form" onSubmit={submit}>
+            {isSignUp && <label>Full name<input required autoComplete="name" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="Your legal name" /></label>}
+            <label>Mobile number<input required type="tel" inputMode="numeric" autoComplete="tel-national" pattern="[0-9]{10}" maxLength={10} value={mobile} onChange={(event) => setMobile(event.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit Indian mobile number" /></label>
+            {isSignUp && <>
+              <fieldset className="language-choice"><legend>Preferred language</legend><button type="button" className={preferredLanguage === 'hi' ? 'selected' : ''} onClick={() => setPreferredLanguage('hi')}>हिन्दी</button><button type="button" className={preferredLanguage === 'en' ? 'selected' : ''} onClick={() => setPreferredLanguage('en')}>English</button></fieldset>
+              <label className="consent-check"><input type="checkbox" checked={termsAccepted} onChange={(event) => setTermsAccepted(event.target.checked)} /><span>I accept the <Link to="/terms">Terms of Service</Link>.</span></label>
+              <label className="consent-check"><input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} /><span>I have read and accept the <Link to="/privacy">Privacy Policy</Link>.</span></label>
+            </>}
+            {message && <p className="form-notice account-notice" role="alert">{message}</p>}
+            <button className="account-submit" type="submit" disabled={loading || (isSignUp && (!termsAccepted || !privacyAccepted))}>{loading ? 'Contacting SMS service…' : isSignUp ? `Create ${roleName.toLowerCase()} account` : `Continue as ${roleName.toLowerCase()}`}<ArrowRight size={16} /></button>
+          </form>
+          <p className="switch-account">{isSignUp ? 'Already registered?' : 'New to RishiRide?'} <Link to={isSignUp ? '/sign-in' : '/sign-up'}>{isSignUp ? 'Sign in' : 'Create an account'}</Link></p>
+          <p className="auth-privacy"><ShieldCheck size={14} />{role === 'passenger' ? 'Passenger signup does not ask for driving documents or Aadhaar.' : 'Driver accounts remain pending until required checks and admin review are complete.'}</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function VerifyPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initial = location.state as WebOtpState | null;
+  const [session, setSession] = useState<WebOtpState | null>(initial);
+  const [otp, setOtp] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [verified, setVerified] = useState(false);
+
+  if (!session) {
+    return <div className="page-wrap verify-missing"><p className="eyebrow">VERIFICATION SESSION ENDED</p><h1>Start again from your phone number.</h1><Link className="book-place" to="/sign-in">Back to sign in <ArrowRight size={16} /></Link></div>;
+  }
+
+  const verify = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!apiBase) return setMessage('Phone verification is not configured. No code was checked.');
+    setMessage('');
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.sessionId, mobile: session.mobile, otp }),
+      });
+      if (!response.ok) throw new Error(await readApiError(response, response.status === 401 ? 'The code is incorrect, expired or already used.' : 'Phone verification is temporarily unavailable.'));
+      const payload: unknown = await response.json();
+      if (typeof payload !== 'object' || payload === null || !('verified' in payload) || payload.verified !== true || !('token' in payload) || typeof payload.token !== 'string' || !payload.token) throw new Error('The verification service returned an invalid response.');
+      setVerified(true);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to verify this code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resend = async () => {
+    if (!apiBase) return setMessage('Phone verification is not configured. No new code was sent.');
+    setMessage('');
+    setLoading(true);
+    try {
+      const response = await fetch(`${apiBase}/auth/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: session.sessionId, mobile: session.mobile }),
+      });
+      if (!response.ok) throw new Error(await readApiError(response, 'Unable to resend the code.'));
+      const payload: unknown = await response.json();
+      if (typeof payload !== 'object' || payload === null || !('sessionId' in payload) || typeof payload.sessionId !== 'string' || !payload.sessionId) throw new Error('The verification service returned an invalid response.');
+      setSession({ ...session, sessionId: payload.sessionId, ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}) });
+      setOtp('');
+      setMessage('A new code was sent.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Unable to resend the code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="account-page verify-page">
+      <div className="account-aside">
+        <Link to="/" className="brand brand-light"><span className="brand-icon"><Navigation size={20} /></span><span className="brand-word">Rishi<span>Ride</span></span></Link>
+        <div className="account-aside-copy"><span>PHONE VERIFICATION</span><p>{verified ? 'Number verified.' : 'One code, then you’re in.'}</p><small>Codes are sent by the configured SMS verification service.</small></div>
+        <div className="account-aside-image"><img src={destinations[0].photoUrl ?? ''} alt="Evening lamps at Triveni Ghat, Rishikesh" /></div>
+      </div>
+      <section className="account-content">
+        <button className="back-link back-button" onClick={() => navigate(-1)}><ArrowLeft size={15} /> Back</button>
+        <div className="account-form-wrap">
+          <p className="eyebrow">{verified ? 'VERIFIED' : 'SMS CODE'}</p>
+          <h1>{verified ? 'Your number is verified.' : 'Check your messages.'}</h1>
+          <p className="account-subtitle">{verified ? 'This browser does not store authentication tokens. Continue in the RishiRides mobile app to use your account.' : `Enter the 6-digit code sent to ******${session.mobile.slice(-4)}.`}</p>
+          {!verified && session.developmentOtp && <p className="form-notice">Development OTP: {session.developmentOtp}</p>}
+          {!verified && <form className="account-form" onSubmit={verify}>
+            <label>6-digit code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={otp} onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" /></label>
+            {message && <p className="form-notice account-notice" role="alert">{message}</p>}
+            <button className="account-submit" type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify phone'}<ArrowRight size={16} /></button>
+          </form>}
+          {!verified && <button className="resend-button" onClick={() => void resend()} disabled={loading}>Resend code</button>}
+          {verified && <div className="verified-next"><ShieldCheck size={18} /><span>{session.role === 'driver' ? 'Your driver application remains pending until all applicable checks and admin review are complete.' : 'No driving licence or Aadhaar is required for ordinary passenger signup.'}</span></div>}
+          <Link className="switch-account" to="/">Return to RishiRide</Link>
+        </div>
+      </section>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import React from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { clearAuthSession } from '../../../api/auth-session';
+import { clearAuthenticatedSession } from '../../../api/session';
 import { RishiColors } from '../../../constants/theme';
 
 const serviceConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
@@ -11,24 +11,12 @@ const serviceConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
 export default function DriverDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [activePreference, setActivePreference] = useState(false);
-
-  const changeAvailability = (next: boolean) => {
-    setActivePreference(next);
-    if (next) {
-      Alert.alert(
-        'Availability not published',
-        'This setting is only stored on this screen. A secure driver service is not configured, so passengers cannot see you as available.'
-      );
-    }
-  };
-
   const unavailable = (feature: string) => {
     Alert.alert(feature + ' unavailable', 'This feature needs the secure RishiRide service, which is not configured in this build.');
   };
 
   const signOut = async () => {
-    await clearAuthSession();
+    await clearAuthenticatedSession();
     router.replace('/login');
   };
 
@@ -51,30 +39,25 @@ export default function DriverDashboard() {
 
         <View style={styles.statusPanel}>
           <View style={styles.statusHeader}>
-            <View style={[styles.statusIcon, activePreference && styles.statusIconActive]}>
-              <MaterialCommunityIcons name="steering" size={23} color={activePreference ? colors.ink : colors.muted} />
+            <View style={styles.statusIcon}>
+              <MaterialCommunityIcons name="file-document-check-outline" size={23} color={colors.muted} />
             </View>
             <View style={styles.statusCopy}>
-              <Text style={styles.kicker}>AVAILABILITY PREFERENCE</Text>
-              <Text style={styles.statusTitle}>{activePreference ? 'Active' : 'Inactive'}</Text>
+              <Text style={styles.kicker}>DRIVER APPLICATION</Text>
+              <Text style={styles.statusTitle}>Incomplete</Text>
             </View>
-            <Switch
-              accessibilityLabel="Set driver availability preference"
-              value={activePreference}
-              onValueChange={changeAvailability}
-              trackColor={{ false: '#394b4b', true: '#72cba0' }}
-              thumbColor={activePreference ? '#f4f4ed' : '#aab8b5'}
-            />
           </View>
           <View style={styles.rule} />
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="information-outline" size={18} color={colors.amber} />
             <Text style={styles.infoText}>
-              {serviceConfigured
-                ? 'Availability updates and ride requests are not supported by the configured API yet.'
-                : 'Availability is not connected to a server. This preference does not publish your location or make you matchable.'}
+              You cannot go online or accept rides until required documents are uploaded privately and an administrator approves them.
             </Text>
           </View>
+          <Pressable accessibilityRole="button" style={styles.onboardingButton} onPress={() => router.push('/driver-onboarding')}>
+            <Text style={styles.onboardingButtonText}>Continue driver onboarding</Text>
+            <MaterialCommunityIcons name="arrow-right" size={18} color={colors.ink} />
+          </Pressable>
         </View>
 
         <View style={styles.sectionHeading}>
@@ -139,6 +122,8 @@ const styles = StyleSheet.create({
   statusHeader: { flexDirection: 'row', alignItems: 'center' },
   statusIcon: { width: 46, height: 46, borderRadius: 12, backgroundColor: colors.elevated, alignItems: 'center', justifyContent: 'center' },
   statusIconActive: { backgroundColor: colors.mint },
+  onboardingButton: { minHeight: 48, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.mint, borderRadius: 10, marginTop: 12 },
+  onboardingButtonText: { color: colors.ink, fontSize: 12, fontWeight: '900' },
   statusCopy: { flex: 1, marginLeft: 12 },
   statusTitle: { color: colors.text, fontSize: 18, fontWeight: '900', marginTop: 2 },
   rule: { height: 1, backgroundColor: colors.line, marginVertical: 15 },

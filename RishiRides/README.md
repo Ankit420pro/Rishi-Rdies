@@ -1,12 +1,13 @@
 # RishiRides
 
-RishiRides is a mobile-first Expo app for local rides in Rishikesh. The current repository contains the React Native client; it does not contain the production API, database, payment gateway, map provider, messaging provider, or admin panel.
+RishiRides is a mobile-first Expo app and API starter for local rides in Rishikesh. Account signup and phone verification are implemented; driver document storage/review, maps, payments and ride dispatch are not live features yet.
 
 ## Requirements
 
 - Node.js compatible with Expo SDK 57
 - Android Studio/emulator or an Android device with Expo Go/development build
-- An authentication API if you want to test phone sign-in
+- PostgreSQL for the API
+- Twilio Verify credentials for real SMS OTP delivery
 
 ## Install and run
 
@@ -26,14 +27,26 @@ npm run web
 
 Web sign-in is intentionally blocked after OTP verification because the app does not persist credentials insecurely in browser storage.
 
+To run the API, configure `server/.env`, then run:
+
+```bash
+cd server
+npm install
+npm run prisma:generate
+npm run prisma:deploy
+npm run dev
+```
+
 ## Configuration
 
-`EXPO_PUBLIC_API_URL` is the base URL used by the existing login and OTP clients. The API must implement:
+`EXPO_PUBLIC_API_URL` is the base URL used by the login, signup and OTP clients. The included API implements:
 
-- `POST /auth/login` with `{ mobile, password, role }`, returning `{ sessionId, mobile, role, maskedMobile }`.
-- `POST /auth/signup` with `{ name, mobile, password, role }` and `licenseNumber` for drivers only, returning `{ sessionId, mobile, role, maskedMobile }`.
+- `POST /auth/login` for existing accounts with `{ mobile, role }`.
+- `POST /auth/signup` with `{ name, mobile, role, preferredLanguage, termsAccepted, privacyAccepted }`.
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
+
+For local development only, `DEV_OTP_SIMULATOR=true` returns a development code. For real delivery, set `DEV_OTP_SIMULATOR=false`, `OTP_PROVIDER=twilio-verify`, and the Twilio account/auth/service values in `server/.env`. Provider credentials must never be added to the Expo client's `.env` or source control. Production refuses to start without Twilio Verify configuration.
 
 This value is public client configuration, not a place for provider secrets. OTP provider credentials, database URLs, payment credentials, and messaging credentials belong only on a trusted server. No API URL or production credentials are included in this repository.
 
@@ -48,13 +61,16 @@ npm test
 
 | Area | Status |
 | --- | --- |
-| Landing, passenger/driver sign-in and sign-up screens | UI implemented; registration requires the configured API |
-| OTP authentication | Requires a configured API implementing the contract above; successful verification routes by account role |
+| Landing and role-specific signup navigation | Implemented |
+| Passenger account signup | Name, mobile, preferred language and required policy consent are stored server-side |
+| OTP authentication | Development simulator or Twilio Verify; no production OTP is generated or exposed by the client |
 | Native session persistence | Verified session token is stored using Expo SecureStore |
+| Driver onboarding | Four-stage requirements and status gate shown; application intake, private uploads and admin approval are not configured, so drivers remain unable to go online |
 | Dashboard role routing | Client routes require a SecureStore session with the matching role; API authorization is still required |
 | Passenger pickup entry, foreground location request, destination suggestions and group-size vehicle choice | Client UI and local validation implemented |
 | Fare quotes, ride creation, driver matching, job dispatch and lifecycle | Not implemented; no API exists in this repository |
-| Driver onboarding, private document storage and approval | Not implemented |
+| Passenger profile, saved places, emergency contacts, payments, ratings and completed-ride OTP | Not implemented |
+| Driver private document storage, state/category rules and admin approval | Not implemented; do not collect identity or bank documents in this build |
 | Maps, push notifications, WhatsApp, payments and admin tools | Not implemented |
 
 Do not use the current app to accept real ride requests or payments. Client-side route checks are not a replacement for server-side authentication, authorization, ownership checks, or persisted ride state.

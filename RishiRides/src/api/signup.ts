@@ -3,9 +3,10 @@ import type { LoginResponse, UserRole } from './login';
 type SignupRequest = {
   name: string;
   mobile: string;
-  password: string;
   role: UserRole;
-  licenseNumber?: string;
+  preferredLanguage: 'en' | 'hi';
+  termsAccepted: true;
+  privacyAccepted: true;
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
@@ -20,7 +21,7 @@ export async function signupUser(
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify({ ...request, name: request.name.trim() }),
   });
 
   if (!response.ok) {
@@ -49,5 +50,6 @@ export async function signupUser(
     mobile: payload.mobile,
     role: payload.role,
     maskedMobile: payload.maskedMobile,
+    ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}),
   };
 }

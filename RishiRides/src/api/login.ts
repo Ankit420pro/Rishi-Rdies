@@ -55,5 +55,6 @@ export async function loginUser(
     mobile: payload.mobile,
     role: payload.role,
     maskedMobile: payload.maskedMobile,
+    ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}),
   };
 }

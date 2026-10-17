@@ -14,16 +14,17 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { UserRole } from '../api/login';
 import { resendOtp, verifyOtp } from '../api/otp';
-import { saveAuthSession } from '../api/auth-session';
+import { saveAuthenticatedSession } from '../api/session';
 import { RishiColors } from '../constants/theme';
 
 export default function OtpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mobile, role, sessionId, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
+  const { mobile, role, sessionId, preferredLanguage, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
     mobile: string;
     role: UserRole;
     sessionId: string;
+    preferredLanguage?: string;
     developmentOtp?: string;
   }>();
   const [otp, setOtp] = useState('');
@@ -50,10 +51,10 @@ export default function OtpScreen() {
         throw new Error('Verification did not return a valid authenticated session.');
       }
 
-      await saveAuthSession({ role, mobile, token: result.token });
+      await saveAuthenticatedSession({ role, mobile, token: result.token });
       router.replace(
         role === 'driver'
-          ? '/dashboards/Drivers/driver-dashboard'
+          ? { pathname: '/driver-onboarding', params: { language: preferredLanguage === 'hi' ? 'hi' : 'en' } }
           : '/dashboards/passenger/passenger-dashboard'
       );
     } catch (error) {

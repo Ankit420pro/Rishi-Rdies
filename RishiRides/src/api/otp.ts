@@ -29,7 +29,8 @@ export async function verifyOtp(
   });
 
   if (!response.ok) {
-    throw new Error('The OTP is incorrect or has expired.');
+    if (response.status === 401) throw new Error('The OTP is incorrect, expired or already used.');
+    throw new Error('OTP verification is temporarily unavailable. Please try again.');
   }
 
   const payload: unknown = await response.json();
@@ -79,5 +80,22 @@ export async function resendOtp(
     throw new Error('Unable to resend the OTP.');
   }
 
-  return response.json() as Promise<OtpChallengeResponse>;
+  const payload: unknown = await response.json();
+  if (
+    typeof payload !== 'object' ||
+    payload === null ||
+    !('sessionId' in payload) ||
+    typeof payload.sessionId !== 'string' ||
+    !payload.sessionId ||
+    ('developmentOtp' in payload && typeof payload.developmentOtp !== 'string')
+  ) {
+    throw new Error('The authentication service returned an invalid resend response.');
+  }
+
+  return {
+    sessionId: payload.sessionId,
+    ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string'
+      ? { developmentOtp: payload.developmentOtp }
+      : {}),
+  };
 }

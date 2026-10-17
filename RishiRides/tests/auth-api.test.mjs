@@ -46,16 +46,16 @@ test('OTP verification requires a token for a verified session', async () => {
   }
 });
 
-test('signup sends a licence number only for driver accounts', async () => {
-  const requests = [];
+test('signup sends language and consent without collecting passenger driving documents', async () => {
+  let requestBody;
   globalThis.fetch = async (_url, options) => {
-    requests.push(JSON.parse(options.body));
+    requestBody = JSON.parse(options.body);
     return {
       ok: true,
       json: async () => ({
         sessionId: 'session',
         mobile: '9876543210',
-        role: requests.at(-1).role,
+        role: 'passenger',
         maskedMobile: '******3210',
       }),
     };
@@ -65,19 +65,19 @@ test('signup sends a licence number only for driver accounts', async () => {
     await signupUser({
       name: 'A Driver',
       mobile: '9876543210',
-      password: 'secret',
-      role: 'driver',
-      licenseNumber: 'DL123',
-    });
-    await signupUser({
-      name: 'A Passenger',
-      mobile: '9876543210',
-      password: 'secret',
       role: 'passenger',
+      preferredLanguage: 'hi',
+      termsAccepted: true,
+      privacyAccepted: true,
     });
 
-    assert.equal(requests[0].licenseNumber, 'DL123');
-    assert.equal('licenseNumber' in requests[1], false);
+    assert.equal(requestBody.name, 'A Driver');
+    assert.equal(requestBody.role, 'passenger');
+    assert.equal(requestBody.preferredLanguage, 'hi');
+    assert.equal(requestBody.termsAccepted, true);
+    assert.equal(requestBody.privacyAccepted, true);
+    assert.equal('licenseNumber' in requestBody, false);
+    assert.equal('password' in requestBody, false);
   } finally {
     globalThis.fetch = originalFetch;
   }

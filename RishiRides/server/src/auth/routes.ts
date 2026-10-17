@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { config } from '../config';
 import { prisma } from '../db';
 import { createOtp, hashOtp, isOtpUsable, otpMatches, OTP_MAX_ATTEMPTS, OTP_TTL_MS } from './otp';
+import { sendTwilioOtp, verifyTwilioOtp } from './otp-provider';
 
 export const authRouter = Router();
 
@@ -15,15 +17,23 @@ const loginSchema = z.object({
   role: z.enum(['passenger', 'driver']),
   name: z.string().trim().min(1).max(120).optional(),
 });
+const signupSchema = z.object({
+  mobile: phoneSchema,
+  role: z.enum(['passenger', 'driver']),
+  name: z.string().trim().min(1).max(120),
+  preferredLanguage: z.enum(['en', 'hi']),
+  termsAccepted: z.literal(true),
+  privacyAccepted: z.literal(true),
+});
 const verifySchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema, otp: z.string().regex(/^[0-9]{6}$/) });
 const resendSchema = z.object({ sessionId: z.uuid(), mobile: phoneSchema });
 
-async function issueOtp(userId: string) {
-  const code = createOtp();
+async function issueOtp(userId: string, mobile: string) {
+  const code = config.developmentOtpEnabled ? createOtp() : undefined;
   const challenge = await prisma.$transaction(async (transaction) => {
     await transaction.otpChallenge.updateMany({ where: { userId, consumedAt: null }, data: { consumedAt: new Date() } });
     return transaction.otpChallenge.create({
-      data: { userId, codeHash: hashOtp(code), expiresAt: new Date(Date.now() + OTP_TTL_MS) },
+      data: { userId, codeHash: hashOtp(code ?? randomBytes(32).toString('hex')), expiresAt: new Date(Date.now() + OTP_TTL_MS) },
       select: { id: true },
     });
   });
@@ -33,27 +43,75 @@ async function issueOtp(userId: string) {
     return { developmentOtp: code };
   }
 
+  if (config.OTP_PROVIDER === 'twilio-verify') {
+    await sendTwilioOtp(mobile, {
+      accountSid: config.TWILIO_ACCOUNT_SID!,
+      authToken: config.TWILIO_AUTH_TOKEN!,
+      serviceSid: config.TWILIO_VERIFY_SERVICE_SID!,
+    });
+    return {};
+  }
+
   throw new Error('OTP delivery is not configured. No message was sent.');
 }
 
 authRouter.post('/login', requestLimit, async (request, response, next) => {
   const parsed = loginSchema.safeParse(request.body);
   if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter a valid mobile number and account type.' } });
-  if (!config.developmentOtpEnabled) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
+  if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
     const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
-    const user = await prisma.user.upsert({
+    const user = await prisma.user.findUnique({
       where: { phone: parsed.data.mobile },
-      create: { phone: parsed.data.mobile, role, name: parsed.data.name },
-      update: {},
       select: { id: true, phone: true, role: true },
     });
+    if (!user) return response.status(404).json({ error: { code: 'ACCOUNT_NOT_FOUND', message: 'No account was found for this number. Create an account first.' } });
     if (user.role !== role) return response.status(409).json({ error: { code: 'ROLE_MISMATCH', message: 'This number is registered for a different account type.' } });
 
-    const { developmentOtp } = await issueOtp(user.id);
+    const { developmentOtp } = await issueOtp(user.id, user.phone);
     return response.status(202).json({
       sessionId: (await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } })).id,
+      mobile: user.phone,
+      role: parsed.data.role,
+      maskedMobile: `******${user.phone.slice(-4)}`,
+      ...(developmentOtp ? { developmentOtp } : {}),
+    });
+  } catch (error) {
+    return next(error);
+  }
+});
+
+authRouter.post('/signup', requestLimit, async (request, response, next) => {
+  const parsed = signupSchema.safeParse(request.body);
+  if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Enter your name, mobile, language, and accept both required policies.' } });
+  if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { phone: parsed.data.mobile }, select: { role: true } });
+    if (existing) return response.status(409).json({ error: { code: 'ACCOUNT_EXISTS', message: 'An account already exists for this number. Sign in instead.' } });
+
+    const acceptedAt = new Date();
+    const user = await prisma.user.create({
+      data: {
+        phone: parsed.data.mobile,
+        name: parsed.data.name,
+        role: parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER',
+        preferredLanguage: parsed.data.preferredLanguage,
+        termsAcceptedAt: acceptedAt,
+        privacyAcceptedAt: acceptedAt,
+      },
+      select: { id: true, phone: true },
+    });
+
+    const { developmentOtp } = await issueOtp(user.id, user.phone);
+    const challenge = await prisma.otpChallenge.findFirstOrThrow({
+      where: { userId: user.id, consumedAt: null },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true },
+    });
+    return response.status(202).json({
+      sessionId: challenge.id,
       mobile: user.phone,
       role: parsed.data.role,
       maskedMobile: `******${user.phone.slice(-4)}`,
@@ -67,12 +125,12 @@ authRouter.post('/login', requestLimit, async (request, response, next) => {
 authRouter.post('/resend-otp', requestLimit, async (request, response, next) => {
   const parsed = resendSchema.safeParse(request.body);
   if (!parsed.success) return response.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'The verification session is invalid.' } });
-  if (!config.developmentOtpEnabled) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
+  if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
     const user = await prisma.user.findFirst({ where: { phone: parsed.data.mobile, challenges: { some: { id: parsed.data.sessionId } } }, select: { id: true } });
     if (!user) return response.status(404).json({ error: { code: 'SESSION_NOT_FOUND', message: 'The verification session was not found.' } });
-    const result = await issueOtp(user.id);
+    const result = await issueOtp(user.id, parsed.data.mobile);
     const challenge = await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } });
     return response.json({ sessionId: challenge.id, ...(result.developmentOtp ? { developmentOtp: result.developmentOtp } : {}) });
   } catch (error) {
@@ -92,7 +150,16 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
       });
       if (!challenge || !isOtpUsable(challenge)) return { kind: 'invalid' as const };
 
-      if (!otpMatches(parsed.data.otp, challenge.codeHash)) {
+      const matches = config.developmentOtpEnabled
+        ? otpMatches(parsed.data.otp, challenge.codeHash)
+        : config.OTP_PROVIDER === 'twilio-verify'
+          ? await verifyTwilioOtp(parsed.data.mobile, parsed.data.otp, {
+              accountSid: config.TWILIO_ACCOUNT_SID!,
+              authToken: config.TWILIO_AUTH_TOKEN!,
+              serviceSid: config.TWILIO_VERIFY_SERVICE_SID!,
+            })
+          : false;
+      if (!matches) {
         await transaction.otpChallenge.updateMany({
           where: { id: challenge.id, attempts: challenge.attempts, consumedAt: null, expiresAt: { gt: new Date() } },
           data: { attempts: { increment: 1 } },
@@ -108,7 +175,7 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
 
       const user = await transaction.user.update({
         where: { id: challenge.userId },
-        data: { status: 'ACTIVE' },
+        data: { status: challenge.user.role === 'DRIVER' ? 'PENDING_VERIFICATION' : 'ACTIVE' },
         select: { id: true, role: true, status: true },
       });
       return { kind: 'verified' as const, user };
