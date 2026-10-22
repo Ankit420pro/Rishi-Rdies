@@ -46,6 +46,22 @@ test('OTP verification requires a token for a verified session', async () => {
   }
 });
 
+test('OTP verification returns the role confirmed by the server', async () => {
+  globalThis.fetch = async () => ({
+    ok: true,
+    json: async () => ({ verified: true, token: 'signed-token', role: 'driver' }),
+  });
+
+  try {
+    assert.deepEqual(
+      await verifyOtp({ sessionId: 'session', mobile: '9876543210', otp: '123456' }),
+      { verified: true, token: 'signed-token', role: 'driver' }
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('signup sends language and consent without collecting passenger driving documents', async () => {
   let requestBody;
   globalThis.fetch = async (_url, options) => {

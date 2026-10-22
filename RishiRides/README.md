@@ -7,7 +7,7 @@ RishiRides is a mobile-first Expo app and API starter for local rides in Rishike
 - Node.js compatible with Expo SDK 57
 - Android Studio/emulator or an Android device with Expo Go/development build
 - PostgreSQL for the API
-- Twilio Verify credentials for real SMS OTP delivery
+- Twilio Verify with an enabled WhatsApp sender for real WhatsApp OTP delivery
 
 ## Install and run
 
@@ -27,9 +27,9 @@ npm run web
 
 ## Local demo mode
 
-When `EXPO_PUBLIC_API_URL` is unset, the app uses a local demo service and does not need PostgreSQL or the API server. Sign up separately as passenger and driver (the same mobile number can be used for both roles), then enter the displayed local demo OTP `1234`. Demo accounts, sessions, and ride requests are stored on the current browser/device only. Passenger bookings can be accepted and progressed by a driver signed in on that same browser/device. Demo trips, fares, and earnings are illustrative only; no real dispatch, tracking, payment, or message occurs. Clear the app/browser storage to remove demo accounts.
+Local demo auth is disabled by default. To opt into it, leave `EXPO_PUBLIC_API_URL` empty and set `EXPO_PUBLIC_DEMO_MODE=true`. It does not need PostgreSQL or the API server. Sign up separately as passenger and driver (the same mobile number can be used for both roles), then enter the displayed local demo OTP `1234`. Demo accounts, sessions, and ride requests are stored on the current browser/device only. Passenger bookings can be accepted and progressed by a driver signed in on that same browser/device. Demo trips, fares, and earnings are illustrative only; no real dispatch, tracking, payment, or message occurs. Clear the app/browser storage to remove demo accounts.
 
-When `EXPO_PUBLIC_API_URL` is set, authentication uses the configured API instead of local demo mode. The ride dispatch API is not implemented yet, so booking remains unavailable as a real trip.
+With `EXPO_PUBLIC_API_URL` set (the default in `.env.example`), authentication uses the API and never silently falls back to local demo OTP. The ride dispatch API is not implemented yet, so booking remains unavailable as a real trip.
 
 Web sign-in is intentionally blocked after OTP verification because the app does not persist credentials insecurely in browser storage.
 
@@ -54,7 +54,7 @@ Passenger and driver profiles are separate role accounts. The same mobile number
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 
-For API development only, `DEV_OTP_SIMULATOR=true` returns a development code. For real delivery, set `DEV_OTP_SIMULATOR=false`, `OTP_PROVIDER=twilio-verify`, and the Twilio account/auth/service values in `server/.env`. Set `OTP_CHANNEL=whatsapp` to request WhatsApp delivery, or leave it as `sms`. WhatsApp requires an enabled Twilio Verify WhatsApp channel/sender and any required approved templates/business setup; this repository has no provider credentials, and no WhatsApp message is sent by local demo mode. Provider credentials must never be added to the Expo client's `.env` or source control. Production refuses to start without Twilio Verify configuration.
+The supplied `server/.env.example` selects `DEV_OTP_SIMULATOR=false`, `OTP_PROVIDER=twilio-verify`, and `OTP_CHANNEL=whatsapp`. Fill in `DATABASE_URL`, a random `JWT_SECRET` of at least 32 characters, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and `TWILIO_VERIFY_SERVICE_SID` in your private `server/.env` before starting the API. Twilio Verify must have WhatsApp enabled for that service and an eligible sender/business setup. The API returns the account role and delivery channel with each challenge; OTP verification issues a token for the role stored on that server-side account. No real message can be sent until valid provider credentials and the database are configured. Provider credentials must never be added to the Expo client's `.env` or source control.
 
 This value is public client configuration, not a place for provider secrets. OTP provider credentials, database URLs, payment credentials, and messaging credentials belong only on a trusted server. No API URL or production credentials are included in this repository.
 
