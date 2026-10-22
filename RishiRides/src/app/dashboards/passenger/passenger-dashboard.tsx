@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -12,8 +12,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { vehicleForPassengerCount } from '../../../domain/ride-rules';
-import { RishiColors } from '../../../constants/theme';
+import RishikeshMapPreview from '../../../components/rishikesh-map-preview';
 
 const bookingConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
 
@@ -28,6 +27,14 @@ const destinations = [
   'Shivpuri',
 ];
 
+const rideOptions = [
+  { name: 'Bike', icon: 'motorbike' as const, fare: 65, eta: '3 min' },
+  { name: 'Auto', icon: 'rickshaw' as const, fare: 110, eta: '5 min' },
+  { name: 'Mini', icon: 'car-hatchback' as const, fare: 165, eta: '7 min' },
+  { name: 'Sedan', icon: 'car-side' as const, fare: 220, eta: '8 min' },
+  { name: 'SUV', icon: 'car-estate' as const, fare: 310, eta: '10 min' },
+];
+
 export default function PassengerDashboard() {
   const router = useRouter();
   const { destination: initialDestination } = useLocalSearchParams<{ destination?: string }>();
@@ -36,11 +43,12 @@ export default function PassengerDashboard() {
   const [destination, setDestination] = useState(initialDestination ?? '');
   const [pickupCoordinates, setPickupCoordinates] = useState<Location.LocationObjectCoords | null>(null);
   const [passengerCount, setPassengerCount] = useState(1);
+  const [selectedRide, setSelectedRide] = useState('Auto');
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const [bookingMessage, setBookingMessage] = useState('');
 
-  const vehicle = useMemo(() => vehicleForPassengerCount(passengerCount), [passengerCount]);
+  const ride = rideOptions.find((option) => option.name === selectedRide) ?? rideOptions[1];
 
   const useCurrentLocation = async () => {
     setLocationLoading(true);
@@ -86,11 +94,9 @@ export default function PassengerDashboard() {
       setBookingMessage('Choose or enter your destination.');
       return;
     }
-    if (!bookingConfigured) {
-      setBookingMessage('Booking service unavailable. Your request has not been sent.');
-      return;
-    }
-    setBookingMessage('The configured API does not provide route estimation or ride requests yet.');
+    setBookingMessage(bookingConfigured
+      ? 'Demo preview only. The configured API does not dispatch rides, so no driver was contacted.'
+      : 'Demo preview only. Ride dispatch is not configured, so no request was sent.');
   };
 
   return (
@@ -117,6 +123,8 @@ export default function PassengerDashboard() {
         </View>
         <Text style={styles.title}>Where to?</Text>
         <Text style={styles.subtitle}>A ride across the valley, on your terms.</Text>
+
+        <RishikeshMapPreview pickup={pickup} destination={destination} />
 
         <View style={styles.bookingPanel}>
           <View style={styles.fieldRow}>
@@ -179,11 +187,42 @@ export default function PassengerDashboard() {
             </View>
           </View>
 
-          <View style={styles.vehicleStrip}>
-            <MaterialCommunityIcons name="rickshaw" size={20} color={colors.mint} />
-            <Text style={styles.vehicleText}>{vehicle}</Text>
-            <Text style={styles.capacityText}>{passengerCount <= 3 ? 'UP TO 3' : '4+ PASSENGERS'}</Text>
+          <View style={styles.rideHeading}>
+            <View>
+              <Text style={styles.label}>RIDE TYPE</Text>
+              <Text style={styles.passengerHint}>Choose a vehicle</Text>
+            </View>
+            <Text style={styles.demoLabel}>DEMO ESTIMATE</Text>
           </View>
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rideOptions}>
+            {rideOptions.map((option) => (
+              <Pressable
+                key={option.name}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedRide === option.name }}
+                style={[styles.rideOption, selectedRide === option.name && styles.rideOptionSelected]}
+                onPress={() => setSelectedRide(option.name)}
+              >
+                <MaterialCommunityIcons name={option.icon} size={23} color={selectedRide === option.name ? colors.green : colors.muted} />
+                <Text style={[styles.rideName, selectedRide === option.name && styles.rideNameSelected]}>{option.name}</Text>
+                <Text style={styles.rideFare}>₹{option.fare}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          <View style={styles.estimateRow}>
+            <View style={styles.estimateMetric}>
+              <MaterialCommunityIcons name="clock-outline" size={16} color={colors.green} />
+              <Text style={styles.estimateText}>{ride.eta} pickup</Text>
+            </View>
+            <View style={styles.estimateMetric}>
+              <MaterialCommunityIcons name="map-marker-distance" size={16} color={colors.green} />
+              <Text style={styles.estimateText}>~4.2 km</Text>
+            </View>
+            <Text style={styles.estimateFare}>₹{ride.fare}</Text>
+          </View>
+          <Text style={styles.estimateDisclaimer}>Illustrative estimate only. Final route and fare are not available in demo mode.</Text>
 
           <Pressable accessibilityRole="button" style={styles.bookButton} onPress={submitBooking}>
             <Text style={styles.bookButtonText}>Find a ride</Text>
@@ -240,23 +279,24 @@ export default function PassengerDashboard() {
 }
 
 const colors = {
-  ink: RishiColors.background,
-  background: RishiColors.background,
-  panel: RishiColors.surface,
-  panelRaised: RishiColors.surfaceRaised,
-  line: RishiColors.line,
-  text: RishiColors.text,
-  muted: RishiColors.muted,
-  mint: RishiColors.mint,
-  amber: RishiColors.warning,
+  ink: '#FFFFFF',
+  background: '#F4F7F3',
+  panel: '#FFFFFF',
+  panelRaised: '#EEF3EE',
+  line: '#DCE5DE',
+  text: '#183A32',
+  muted: '#718078',
+  mint: '#087F68',
+  green: '#087F68',
+  amber: '#9A6D16',
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  scroll: { width: '100%', maxWidth: 680, alignSelf: 'center', paddingHorizontal: 20, paddingBottom: 34 },
+  scroll: { width: '100%', maxWidth: 760, alignSelf: 'center', paddingHorizontal: 20, paddingBottom: 34 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 17 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  logoMark: { width: 42, height: 42, borderRadius: 12, backgroundColor: colors.mint, alignItems: 'center', justifyContent: 'center' },
+  logoMark: { width: 42, height: 42, borderRadius: 12, backgroundColor: '#D3F279', alignItems: 'center', justifyContent: 'center' },
   brandName: { color: colors.text, fontSize: 17, fontWeight: '900' },
   brandLocation: { color: colors.muted, fontSize: 9, fontWeight: '800', marginTop: 2 },
   profileButton: { width: 42, height: 42, borderWidth: 1, borderColor: colors.line, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
@@ -265,7 +305,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: colors.mint, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
   title: { color: colors.text, fontSize: 34, fontWeight: '900', marginTop: 10 },
   subtitle: { color: colors.muted, fontSize: 14, marginTop: 4, marginBottom: 23 },
-  bookingPanel: { backgroundColor: colors.panel, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 17 },
+  bookingPanel: { backgroundColor: colors.panel, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 17, marginTop: 13, elevation: 2 },
   fieldRow: { flexDirection: 'row', gap: 13 },
   routeDots: { width: 14, alignItems: 'center', paddingTop: 27, paddingBottom: 21 },
   pickupDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.mint },
@@ -284,9 +324,19 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   stepButton: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.panelRaised, alignItems: 'center', justifyContent: 'center' },
   count: { color: colors.text, fontSize: 16, fontWeight: '900', minWidth: 17, textAlign: 'center' },
-  vehicleStrip: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.panelRaised, borderRadius: 8, paddingHorizontal: 11, paddingVertical: 10, marginTop: 16 },
-  vehicleText: { color: colors.text, fontSize: 13, fontWeight: '800', flex: 1 },
-  capacityText: { color: colors.muted, fontSize: 9, fontWeight: '900' },
+  rideHeading: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 },
+  demoLabel: { color: colors.mint, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
+  rideOptions: { gap: 8, paddingVertical: 11 },
+  rideOption: { width: 82, minHeight: 82, alignItems: 'center', justifyContent: 'center', gap: 3, backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.line, borderRadius: 10 },
+  rideOptionSelected: { backgroundColor: '#E6F3EC', borderColor: colors.mint },
+  rideName: { color: colors.muted, fontSize: 11, fontWeight: '800' },
+  rideNameSelected: { color: colors.text },
+  rideFare: { color: colors.text, fontSize: 10, fontWeight: '700' },
+  estimateRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.line },
+  estimateMetric: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  estimateText: { color: colors.muted, fontSize: 10, fontWeight: '700' },
+  estimateFare: { color: colors.text, fontSize: 15, fontWeight: '900', marginLeft: 'auto' },
+  estimateDisclaimer: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 5 },
   bookButton: { height: 52, backgroundColor: colors.mint, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 },
   bookButtonText: { color: colors.ink, fontSize: 14, fontWeight: '900' },
   bookingError: { color: colors.amber, fontSize: 12, lineHeight: 17, marginTop: 10 },
