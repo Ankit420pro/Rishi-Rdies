@@ -18,6 +18,7 @@ export async function sendTwilioOtp(
   mobile: string,
   credentials: TwilioVerifyCredentials,
   fetcher: Fetcher = fetch,
+  channel: 'sms' | 'whatsapp' = 'sms',
 ): Promise<void> {
   const response = await fetcher(endpoint(credentials, 'Verifications'), {
     method: 'POST',
@@ -25,7 +26,7 @@ export async function sendTwilioOtp(
       Authorization: authorizationHeader(credentials),
       'Content-Type': 'application/x-www-form-urlencoded',
     },
-    body: new URLSearchParams({ To: `+91${mobile}`, Channel: 'sms' }),
+    body: new URLSearchParams({ To: `+91${mobile}`, Channel: channel }),
   });
 
   if (!response.ok) {

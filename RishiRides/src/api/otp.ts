@@ -1,6 +1,8 @@
+import { resendDemoOtp, verifyDemoOtp } from './demo-auth';
+
 export type OtpResponse =
-  | { verified: false; token?: string }
-  | { verified: true; token: string };
+  | { verified: false; token?: string; role?: 'passenger' | 'driver' }
+  | { verified: true; token: string; role?: 'passenger' | 'driver' };
 
 export type OtpChallengeResponse = {
   sessionId: string;
@@ -19,7 +21,7 @@ export async function verifyOtp(
   request: OtpRequest
 ): Promise<OtpResponse> {
   if (!API_BASE_URL) {
-    throw new Error('Verification is unavailable because the authentication service is not configured.');
+    return verifyDemoOtp(request.sessionId, request.mobile, request.otp);
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
@@ -67,7 +69,7 @@ export async function resendOtp(
   mobile: string
 ): Promise<OtpChallengeResponse> {
   if (!API_BASE_URL) {
-    throw new Error('OTP delivery is unavailable because the authentication service is not configured.');
+    return resendDemoOtp(sessionId, mobile);
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {

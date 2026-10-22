@@ -1,23 +1,76 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { clearAuthenticatedSession } from '../../../api/session';
+import { clearAuthenticatedSession, getAuthenticatedSession } from '../../../api/session';
+import { acceptDemoRide, getDemoRides, rejectDemoRide, updateDemoRideStatus, type DemoRide } from '../../../api/demo-rides';
 import RishikeshMapPreview from '../../../components/rishikesh-map-preview';
+
+const demoMode = !process.env.EXPO_PUBLIC_API_URL;
 
 export default function DriverDashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [showSample, setShowSample] = useState(true);
   const [demoMessage, setDemoMessage] = useState('');
+  const [driverMobile, setDriverMobile] = useState('');
+  const [demoOnline, setDemoOnline] = useState(false);
+  const [requests, setRequests] = useState<DemoRide[]>([]);
+  const [rideHistory, setRideHistory] = useState<DemoRide[]>([]);
+  const [activeRide, setActiveRide] = useState<DemoRide | null>(null);
   const unavailable = (feature: string) => {
     Alert.alert(feature + ' unavailable', 'This feature needs the secure RishiRide service, which is not configured in this build.');
   };
 
   const signOut = async () => {
     await clearAuthenticatedSession();
-    router.replace('/login');
+    router.replace({ pathname: '/login', params: { role: 'driver' } });
+  };
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const session = await getAuthenticatedSession();
+      if (!session || !active) return;
+      setDriverMobile(session.mobile);
+      const rides = await getDemoRides();
+      if (!active) return;
+      setRequests(rides.filter((ride) => ride.status === 'requested'));
+      setRideHistory(rides.filter((ride) => ride.driverMobile === session.mobile));
+      setActiveRide(rides.find((ride) => ride.driverMobile === session.mobile && ['accepted', 'driver_arriving', 'in_progress'].includes(ride.status)) ?? null);
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 2000);
+    return () => { active = false; clearInterval(timer); };
+  }, []);
+
+  const acceptRequest = async (rideId: string) => {
+    if (!demoMode || !demoOnline) return;
+    try {
+      await acceptDemoRide(rideId, driverMobile);
+      setDemoMessage('Demo request accepted locally. Passenger status will update on this device.');
+    } catch (error) {
+      setDemoMessage(error instanceof Error ? error.message : 'Could not accept this demo request.');
+    }
+  };
+
+  const updateActiveRide = async (status: 'driver_arriving' | 'in_progress' | 'completed') => {
+    if (!activeRide) return;
+    try {
+      await updateDemoRideStatus(activeRide.id, status, driverMobile);
+      setDemoMessage(`Demo trip updated: ${status.replace('_', ' ')}.`);
+    } catch (error) {
+      setDemoMessage(error instanceof Error ? error.message : 'Could not update the demo trip.');
+    }
+  };
+
+  const completedRides = rideHistory.filter((ride) => ride.status === 'completed');
+  const demoEarnings = completedRides.reduce((total, ride) => total + ride.estimate, 0);
+  const openRideHistory = () => {
+    const description = rideHistory.length
+      ? rideHistory.map((ride) => `${ride.pickup} → ${ride.destination} · ${ride.status.replace('_', ' ')} · ₹${ride.estimate}`).join('\n')
+      : 'No demo rides yet.';
+    Alert.alert('Local demo ride history', description);
   };
 
   return (
@@ -29,7 +82,7 @@ export default function DriverDashboard() {
             <Text style={styles.brand}>RishiRide</Text>
             <Text style={styles.kicker}>RISHIKESH · DRIVER</Text>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Open profile" style={styles.profileButton} onPress={() => unavailable('Driver profile')}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Open profile" style={styles.profileButton} onPress={() => Alert.alert('Driver demo profile', `Role: Driver Partner\nMobile: •••• ${driverMobile.slice(-4)}\nVerification: Not submitted`)}>
             <MaterialCommunityIcons name="account-outline" size={22} color={colors.text} />
           </Pressable>
         </View>
@@ -42,14 +95,16 @@ export default function DriverDashboard() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>TODAY'S EARNINGS</Text>
-            <Text style={styles.summaryValue}>--</Text>
+            <Text style={styles.summaryValue}>{demoMode ? `₹${demoEarnings}` : '--'}</Text>
           </View>
           <View style={styles.summaryDivider} />
           <View style={styles.summaryItem}>
             <Text style={styles.summaryLabel}>COMPLETED RIDES</Text>
-            <Text style={styles.summaryValue}>--</Text>
+            <Text style={styles.summaryValue}>{demoMode ? completedRides.length : '--'}</Text>
           </View>
-          <View style={styles.offlineBadge}><View style={styles.offlineDot} /><Text style={styles.offlineText}>OFFLINE</Text></View>
+          <Pressable accessibilityRole="switch" accessibilityState={{ checked: demoOnline, disabled: !demoMode }} style={[styles.offlineBadge, demoOnline && styles.onlineBadge]} disabled={!demoMode} onPress={() => setDemoOnline((value) => !value)}>
+            <View style={[styles.offlineDot, demoOnline && styles.onlineDot]} /><Text style={[styles.offlineText, demoOnline && styles.onlineText]}>{demoOnline ? 'DEMO ONLINE' : 'OFFLINE'}</Text>
+          </Pressable>
         </View>
 
         <View style={styles.statusPanel}>
@@ -66,7 +121,7 @@ export default function DriverDashboard() {
           <View style={styles.infoRow}>
             <MaterialCommunityIcons name="information-outline" size={18} color={colors.amber} />
             <Text style={styles.infoText}>
-              You cannot go online or accept rides until required documents are uploaded privately and an administrator approves them.
+              {demoMode ? 'Demo mode allows locally stored sample requests only. Real trips require private document review and administrator approval.' : 'You cannot accept live rides until required documents are uploaded privately and an administrator approves them.'}
             </Text>
           </View>
           <Pressable accessibilityRole="button" style={styles.onboardingButton} onPress={() => router.push('/driver-onboarding')}>
@@ -75,55 +130,65 @@ export default function DriverDashboard() {
           </Pressable>
         </View>
 
+        {activeRide && (
+          <View style={styles.requestPanel}>
+            <Text style={styles.sampleCaption}>LOCAL DEMO TRIP · NOT LIVE TRACKING</Text>
+            <Text style={styles.sampleTitle}>{activeRide.pickup} → {activeRide.destination}</Text>
+            <Text style={styles.requestMetaText}>Passenger •••• {activeRide.passengerMobile.slice(-4)} · {activeRide.vehicle} · ₹{activeRide.estimate} estimate</Text>
+            {activeRide.status === 'accepted' && <Pressable accessibilityRole="button" style={styles.onboardingButton} onPress={() => void updateActiveRide('driver_arriving')}><Text style={styles.onboardingButtonText}>Confirm arrival</Text><MaterialCommunityIcons name="map-marker-check" size={18} color={colors.ink} /></Pressable>}
+            {activeRide.status === 'driver_arriving' && <Pressable accessibilityRole="button" style={styles.onboardingButton} onPress={() => void updateActiveRide('in_progress')}><Text style={styles.onboardingButtonText}>Start demo trip</Text><MaterialCommunityIcons name="play" size={18} color={colors.ink} /></Pressable>}
+            {activeRide.status === 'in_progress' && <Pressable accessibilityRole="button" style={styles.onboardingButton} onPress={() => void updateActiveRide('completed')}><Text style={styles.onboardingButtonText}>Complete demo trip</Text><MaterialCommunityIcons name="check" size={18} color={colors.ink} /></Pressable>}
+          </View>
+        )}
+
         <View style={styles.sectionHeading}>
           <Text style={styles.sectionTitle}>Incoming requests</Text>
-          <View style={styles.countPill}><Text style={styles.countText}>DEMO</Text></View>
+          <View style={styles.countPill}><Text style={styles.countText}>{demoMode ? 'DEMO' : 'LIVE OFF'}</Text></View>
         </View>
-        {showSample ? (
-          <View style={styles.requestPanel}>
+        {requests.length ? requests.map((request) => (
+          <View key={request.id} style={styles.requestPanel}>
             <View style={styles.sampleHeader}>
               <View style={styles.sampleIcon}><MaterialCommunityIcons name="map-marker-path" size={21} color={colors.green} /></View>
               <View style={styles.sampleCopy}>
-                <Text style={styles.sampleTitle}>Sample ride request</Text>
-                <Text style={styles.sampleCaption}>DEMO ONLY · NOT DISPATCHED</Text>
+                <Text style={styles.sampleTitle}>Passenger request</Text>
+                <Text style={styles.sampleCaption}>LOCAL DEMO · NOT DISPATCHED</Text>
               </View>
-              <Text style={styles.sampleFare}>₹140</Text>
+              <Text style={styles.sampleFare}>₹{request.estimate}</Text>
             </View>
             <View style={styles.requestRoute}>
               <View style={styles.requestDots}><View style={styles.requestPickupDot} /><View style={styles.requestRouteLine} /><View style={styles.requestDropDot} /></View>
               <View style={styles.requestPlaces}>
-                <View style={styles.requestPlace}><Text style={styles.requestPlaceLabel}>PICKUP</Text><Text style={styles.requestPlaceName}>Triveni Ghat</Text></View>
-                <View style={styles.requestPlace}><Text style={styles.requestPlaceLabel}>DROP</Text><Text style={styles.requestPlaceName}>Ram Jhula</Text></View>
+                <View style={styles.requestPlace}><Text style={styles.requestPlaceLabel}>PICKUP</Text><Text style={styles.requestPlaceName}>{request.pickup}</Text></View>
+                <View style={styles.requestPlace}><Text style={styles.requestPlaceLabel}>DROP</Text><Text style={styles.requestPlaceName}>{request.destination}</Text></View>
               </View>
             </View>
             <View style={styles.requestMeta}>
-              <Text style={styles.requestMetaText}>~1.8 km to pickup</Text>
-              <Text style={styles.requestMetaText}>~3.1 km trip</Text>
-              <Text style={styles.requestMetaText}>Auto</Text>
+              <Text style={styles.requestMetaText}>Passenger •••• {request.passengerMobile.slice(-4)}</Text>
+              <Text style={styles.requestMetaText}>{request.vehicle}</Text>
             </View>
             <View style={styles.requestActions}>
-              <Pressable accessibilityRole="button" style={styles.dismissButton} onPress={() => { setShowSample(false); setDemoMessage('Sample request dismissed locally. Nothing was sent to a service.'); }}>
+              <Pressable accessibilityRole="button" style={styles.dismissButton} onPress={() => { void rejectDemoRide(request.id).then(() => setDemoMessage('Demo request dismissed locally.')); }}>
                 <Text style={styles.dismissText}>Dismiss</Text>
               </Pressable>
-              <Pressable accessibilityRole="button" accessibilityState={{ disabled: true }} style={styles.acceptDisabled} onPress={() => setDemoMessage('Driver approval and live dispatch are not configured. This sample cannot be accepted.')}>
-                <Text style={styles.acceptDisabledText}>Accept unavailable</Text>
+              <Pressable accessibilityRole="button" accessibilityState={{ disabled: !demoMode || !demoOnline }} style={[styles.acceptDisabled, demoMode && demoOnline && styles.acceptEnabled]} disabled={!demoMode || !demoOnline} onPress={() => void acceptRequest(request.id)}>
+                <Text style={styles.acceptDisabledText}>{!demoMode ? 'Live dispatch unavailable' : demoOnline ? 'Accept demo request' : 'Go online to accept'}</Text>
               </Pressable>
             </View>
-            <Text style={styles.sampleDisclaimer}>Driver review and ride dispatch are not configured. This sample cannot be accepted.</Text>
+            <Text style={styles.sampleDisclaimer}>Local demo only. No real dispatch, route tracking, or payment is connected.</Text>
           </View>
-        ) : (
+        )) : (
           <View style={styles.emptyPanel}>
             <View style={styles.emptyIcon}><MaterialCommunityIcons name="inbox-outline" size={28} color={colors.mint} /></View>
-            <Text style={styles.emptyTitle}>No requests available</Text>
-            <Text style={styles.emptyDescription}>The sample request was hidden. No live ride requests are connected.</Text>
+            <Text style={styles.emptyTitle}>No pending requests</Text>
+            <Text style={styles.emptyDescription}>{demoMode ? 'Requests from a local demo passenger appear here.' : 'Live ride dispatch is not configured.'}</Text>
           </View>
         )}
         {!!demoMessage && <Text accessibilityLiveRegion="polite" style={styles.demoMessage}>{demoMessage}</Text>}
 
         <Text style={styles.sectionTitle}>Your work</Text>
         <View style={styles.actionList}>
-          <WorkspaceAction icon="history" label="Ride history" onPress={() => unavailable('Ride history')} />
-          <WorkspaceAction icon="cash-multiple" label="Earnings" onPress={() => unavailable('Earnings')} />
+          <WorkspaceAction icon="history" label="Ride history" onPress={openRideHistory} />
+          <WorkspaceAction icon="cash-multiple" label="Earnings" onPress={() => Alert.alert('Demo earnings', demoMode ? `${completedRides.length} completed demo rides\nIllustrative total: ₹${demoEarnings}\nNo payout has been made.` : 'Earnings are not available from the configured service.')} />
           <WorkspaceAction icon="file-document-outline" label="Registration and verification" onPress={() => unavailable('Driver registration')} />
         </View>
 
@@ -134,8 +199,8 @@ export default function DriverDashboard() {
       </ScrollView>
       <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 12) }]}>
         <View style={styles.navItem}><MaterialCommunityIcons name="inbox-outline" size={20} color={colors.mint} /><Text style={styles.navActive}>Inbox</Text></View>
-        <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => unavailable('Driver history')}><MaterialCommunityIcons name="history" size={20} color={colors.muted} /><Text style={styles.navText}>History</Text></Pressable>
-        <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => unavailable('Driver profile')}><MaterialCommunityIcons name="account-outline" size={20} color={colors.muted} /><Text style={styles.navText}>Profile</Text></Pressable>
+        <Pressable accessibilityRole="button" style={styles.navItem} onPress={openRideHistory}><MaterialCommunityIcons name="history" size={20} color={colors.muted} /><Text style={styles.navText}>History</Text></Pressable>
+        <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => Alert.alert('Driver demo profile', `Role: Driver Partner\nMobile: •••• ${driverMobile.slice(-4)}\nVerification: Not submitted`)}><MaterialCommunityIcons name="account-outline" size={20} color={colors.muted} /><Text style={styles.navText}>Profile</Text></Pressable>
       </View>
     </View>
   );
@@ -170,8 +235,11 @@ const styles = StyleSheet.create({
   summaryValue: { color: colors.text, fontSize: 17, fontWeight: '900', marginTop: 5 },
   summaryDivider: { width: 1, height: 34, backgroundColor: colors.line },
   offlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 6, backgroundColor: colors.elevated, borderRadius: 14 },
+  onlineBadge: { backgroundColor: '#E6F3EC' },
   offlineDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.muted },
+  onlineDot: { backgroundColor: colors.mint },
   offlineText: { color: colors.muted, fontSize: 8, fontWeight: '900' },
+  onlineText: { color: colors.mint },
   statusPanel: { backgroundColor: colors.panel, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 16 },
   statusHeader: { flexDirection: 'row', alignItems: 'center' },
   statusIcon: { width: 46, height: 46, borderRadius: 12, backgroundColor: colors.elevated, alignItems: 'center', justifyContent: 'center' },
@@ -213,6 +281,7 @@ const styles = StyleSheet.create({
   dismissButton: { minHeight: 43, flex: 1, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.line, borderRadius: 9 },
   dismissText: { color: colors.text, fontSize: 11, fontWeight: '800' },
   acceptDisabled: { minHeight: 43, flex: 1.5, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.mint, borderRadius: 9, opacity: 0.48 },
+  acceptEnabled: { opacity: 1 },
   acceptDisabledText: { color: '#FFFFFF', fontSize: 11, fontWeight: '900' },
   sampleDisclaimer: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 9 },
   demoMessage: { color: colors.amber, fontSize: 11, lineHeight: 16, marginTop: 10 },

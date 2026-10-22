@@ -58,6 +58,9 @@ export default function OtpScreen() {
       if (!result.verified || !result.token?.trim() || !role || !mobile) {
         throw new Error('Verification did not return a valid authenticated session.');
       }
+      if (result.role && result.role !== role) {
+        throw new Error('This verification code belongs to a different account role. Go back and choose the matching role.');
+      }
 
       await saveAuthenticatedSession({ role, mobile, token: result.token });
       router.replace(
@@ -84,7 +87,12 @@ export default function OtpScreen() {
       setDevelopmentOtp(challenge.developmentOtp ?? '');
       setOtp('');
       setResendSeconds(30);
-      Alert.alert('OTP sent', 'A new OTP has been sent to your mobile number.');
+      Alert.alert(
+        challenge.developmentOtp ? 'Demo code ready' : 'OTP sent',
+        challenge.developmentOtp
+          ? 'Local demo code refreshed. No WhatsApp message was sent.'
+          : 'A new OTP was sent to your mobile number.'
+      );
     } catch (error) {
       Alert.alert(
         'Unable to resend',
@@ -125,7 +133,7 @@ export default function OtpScreen() {
         {developmentOtp.length > 0 && (
           <View style={styles.developmentCode}>
             <MaterialCommunityIcons name="flask-outline" size={17} color={RishiColors.warning} />
-            <Text style={styles.developmentCodeText}>Development OTP: {developmentOtp}</Text>
+            <Text style={styles.developmentCodeText}>Local demo OTP: {developmentOtp} · not sent by WhatsApp</Text>
           </View>
         )}
 

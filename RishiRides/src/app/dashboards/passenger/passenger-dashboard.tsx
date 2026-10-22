@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -13,8 +13,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RishikeshMapPreview from '../../../components/rishikesh-map-preview';
+import { createDemoRide, getDemoRides, updateDemoRideStatus, type DemoRide } from '../../../api/demo-rides';
+import { getAuthenticatedSession } from '../../../api/session';
 
-const bookingConfigured = Boolean(process.env.EXPO_PUBLIC_API_URL);
+const demoMode = !process.env.EXPO_PUBLIC_API_URL;
 
 const destinations = [
   'Triveni Ghat',
@@ -47,8 +49,29 @@ export default function PassengerDashboard() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
   const [bookingMessage, setBookingMessage] = useState('');
+  const [demoRide, setDemoRide] = useState<DemoRide | null>(null);
+  const [rideHistory, setRideHistory] = useState<DemoRide[]>([]);
+  const [passengerMobile, setPassengerMobile] = useState('');
 
   const ride = rideOptions.find((option) => option.name === selectedRide) ?? rideOptions[1];
+
+  useEffect(() => {
+    let active = true;
+    const refresh = async () => {
+      const session = await getAuthenticatedSession();
+      if (!active || !session) return;
+      setPassengerMobile(session.mobile);
+      const rides = await getDemoRides();
+      if (active) {
+        const passengerRides = rides.filter((item) => item.passengerMobile === session.mobile);
+        setRideHistory(passengerRides);
+        setDemoRide(passengerRides[0] ?? null);
+      }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 2000);
+    return () => { active = false; clearInterval(timer); };
+  }, []);
 
   const useCurrentLocation = async () => {
     setLocationLoading(true);
@@ -85,7 +108,11 @@ export default function PassengerDashboard() {
     }
   };
 
-  const submitBooking = () => {
+  const submitBooking = async () => {
+    if (demoRide && !['cancelled', 'rejected', 'completed'].includes(demoRide.status)) {
+      setBookingMessage('You already have an open demo ride. Cancel or complete it before requesting another.');
+      return;
+    }
     if (!pickup.trim()) {
       setBookingMessage('Enter or select a pickup point before requesting a ride.');
       return;
@@ -94,9 +121,42 @@ export default function PassengerDashboard() {
       setBookingMessage('Choose or enter your destination.');
       return;
     }
-    setBookingMessage(bookingConfigured
-      ? 'Demo preview only. The configured API does not dispatch rides, so no driver was contacted.'
-      : 'Demo preview only. Ride dispatch is not configured, so no request was sent.');
+    if (!demoMode) {
+      setBookingMessage('Ride dispatch is not implemented by the configured API. No request was sent.');
+      return;
+    }
+    try {
+      const created = await createDemoRide({
+        passengerMobile,
+        pickup: pickup.trim(),
+        destination: destination.trim(),
+        vehicle: ride.name,
+        estimate: ride.fare,
+      });
+      setDemoRide(created);
+      setRideHistory((rides) => [created, ...rides]);
+      setBookingMessage('Demo ride request created locally. No driver was contacted over a live service.');
+    } catch (error) {
+      setBookingMessage(error instanceof Error ? error.message : 'Could not create the local demo request.');
+    }
+  };
+
+  const cancelDemoRide = async () => {
+    if (!demoRide) return;
+    try {
+      const updated = await updateDemoRideStatus(demoRide.id, 'cancelled', passengerMobile);
+      setDemoRide(updated);
+      setRideHistory((rides) => rides.map((rideItem) => rideItem.id === updated.id ? updated : rideItem));
+    } catch (error) {
+      setBookingMessage(error instanceof Error ? error.message : 'Could not cancel the demo ride.');
+    }
+  };
+
+  const openRideHistory = () => {
+    const description = rideHistory.length
+      ? rideHistory.map((item) => `${item.pickup} → ${item.destination} · ${rideStatusLabel(item.status)} · ₹${item.estimate}`).join('\n')
+      : 'No ride requests yet.';
+    Alert.alert('Your demo rides', description);
   };
 
   return (
@@ -112,7 +172,7 @@ export default function PassengerDashboard() {
               <Text style={styles.brandLocation}>RISHIKESH, INDIA</Text>
             </View>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Open profile" style={styles.profileButton} onPress={() => router.push('/login')}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Open profile" style={styles.profileButton} onPress={() => Alert.alert('Passenger demo profile', `Role: Passenger\nMobile: •••• ${passengerMobile.slice(-4)}`)}>
             <MaterialCommunityIcons name="account-outline" size={22} color={colors.text} />
           </Pressable>
         </View>
@@ -224,19 +284,36 @@ export default function PassengerDashboard() {
           </View>
           <Text style={styles.estimateDisclaimer}>Illustrative estimate only. Final route and fare are not available in demo mode.</Text>
 
-          <Pressable accessibilityRole="button" style={styles.bookButton} onPress={submitBooking}>
-            <Text style={styles.bookButtonText}>Find a ride</Text>
+          <Pressable accessibilityRole="button" style={styles.bookButton} onPress={() => void submitBooking()}>
+            <Text style={styles.bookButtonText}>{demoMode ? 'Request demo ride' : 'Find a ride'}</Text>
             <MaterialCommunityIcons name="arrow-right" size={20} color={colors.ink} />
           </Pressable>
           {!!bookingMessage && <Text accessibilityRole="alert" style={styles.bookingError}>{bookingMessage}</Text>}
         </View>
 
+        {demoRide && !['cancelled', 'rejected'].includes(demoRide.status) && (
+          <View style={styles.currentRide}>
+            <View style={styles.currentRideHeader}>
+              <View><Text style={styles.currentRideKicker}>LOCAL DEMO TRIP</Text><Text style={styles.currentRideTitle}>{rideStatusLabel(demoRide.status)}</Text></View>
+              <Text style={styles.currentRideFare}>₹{demoRide.estimate}</Text>
+            </View>
+            <Text style={styles.currentRideRoute}>{demoRide.pickup}  →  {demoRide.destination}</Text>
+            {demoRide.driverMobile && <Text style={styles.currentRideDriver}>Demo driver connected · •••• {demoRide.driverMobile.slice(-4)}</Text>}
+            <Text style={styles.currentRideNotice}>This trip is saved on this device only. No live vehicle, map tracking, payment, or WhatsApp message is involved.</Text>
+            {['requested', 'accepted', 'driver_arriving'].includes(demoRide.status) && (
+              <Pressable accessibilityRole="button" style={styles.cancelRideButton} onPress={() => void cancelDemoRide()}>
+                <Text style={styles.cancelRideText}>Cancel demo request</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
+
         <View style={styles.serviceNote}>
           <MaterialCommunityIcons name="information-outline" size={19} color={colors.amber} />
           <Text style={styles.serviceNoteText}>
-            {bookingConfigured
-              ? 'Route estimates and ride dispatch are not available from the configured service yet.'
-              : 'Secure booking, route estimates, and driver matching are not configured. No ride request will be sent.'}
+            {demoMode
+              ? 'Demo mode: requests are stored locally and can be accepted by a demo driver on this device.'
+              : 'The configured service does not provide fare quotes or ride dispatch yet. No real request will be sent.'}
           </Text>
         </View>
 
@@ -258,11 +335,11 @@ export default function PassengerDashboard() {
         </View>
 
         <View style={styles.footerNav}>
-          <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/login')}>
+          <Pressable accessibilityRole="button" style={styles.navItem} onPress={openRideHistory}>
             <MaterialCommunityIcons name="history" size={20} color={colors.muted} />
             <Text style={styles.navText}>Rides</Text>
           </Pressable>
-          <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => Alert.alert('Driver directory unavailable', 'Driver availability and distance must come from a configured secure service.') }>
+          <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/auth/role')}>
             <MaterialCommunityIcons name="account-search-outline" size={20} color={colors.muted} />
             <Text style={styles.navText}>Drivers</Text>
           </Pressable>
@@ -276,6 +353,19 @@ export default function PassengerDashboard() {
       </ScrollView>
     </View>
   );
+}
+
+function rideStatusLabel(status: DemoRide['status']): string {
+  const labels: Record<DemoRide['status'], string> = {
+    requested: 'Looking for a demo driver',
+    accepted: 'Demo driver accepted',
+    driver_arriving: 'Demo driver arriving',
+    in_progress: 'Demo trip in progress',
+    completed: 'Demo trip completed',
+    cancelled: 'Demo trip cancelled',
+    rejected: 'No demo driver accepted',
+  };
+  return labels[status];
 }
 
 const colors = {
@@ -340,6 +430,16 @@ const styles = StyleSheet.create({
   bookButton: { height: 52, backgroundColor: colors.mint, borderRadius: 9, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, marginTop: 14 },
   bookButtonText: { color: colors.ink, fontSize: 14, fontWeight: '900' },
   bookingError: { color: colors.amber, fontSize: 12, lineHeight: 17, marginTop: 10 },
+  currentRide: { padding: 15, marginTop: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: '#FFFFFF' },
+  currentRideHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  currentRideKicker: { color: colors.mint, fontSize: 9, fontWeight: '900', letterSpacing: 0.7 },
+  currentRideTitle: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 4 },
+  currentRideFare: { color: colors.text, fontSize: 16, fontWeight: '900' },
+  currentRideRoute: { color: colors.text, fontSize: 12, fontWeight: '700', marginTop: 10 },
+  currentRideDriver: { color: colors.mint, fontSize: 11, fontWeight: '800', marginTop: 7 },
+  currentRideNotice: { color: colors.muted, fontSize: 10, lineHeight: 15, marginTop: 8 },
+  cancelRideButton: { alignSelf: 'flex-start', minHeight: 38, justifyContent: 'center', paddingHorizontal: 12, marginTop: 10, borderWidth: 1, borderColor: colors.line, borderRadius: 8 },
+  cancelRideText: { color: colors.amber, fontSize: 10, fontWeight: '900' },
   serviceNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.line, paddingVertical: 15 },
   serviceNoteText: { color: colors.muted, fontSize: 12, lineHeight: 17, flex: 1 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 22, marginBottom: 12 },

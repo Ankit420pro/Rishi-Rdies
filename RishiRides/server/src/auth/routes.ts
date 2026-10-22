@@ -48,7 +48,7 @@ async function issueOtp(userId: string, mobile: string) {
       accountSid: config.TWILIO_ACCOUNT_SID!,
       authToken: config.TWILIO_AUTH_TOKEN!,
       serviceSid: config.TWILIO_VERIFY_SERVICE_SID!,
-    });
+    }, fetch, config.OTP_CHANNEL);
     return {};
   }
 

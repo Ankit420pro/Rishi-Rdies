@@ -1,3 +1,5 @@
+import { startDemoSignup } from './demo-auth';
+
 import type { LoginResponse, UserRole } from './login';
 
 type SignupRequest = {
@@ -16,7 +18,13 @@ export async function signupUser(
   request: SignupRequest
 ): Promise<LoginResponse> {
   if (!API_BASE_URL) {
-    throw new Error('Sign-up is unavailable because the authentication service is not configured.');
+    return startDemoSignup({
+      mobile: request.mobile,
+      role: request.role,
+      name: request.name.trim(),
+      ...(request.email?.trim() ? { email: request.email.trim().toLowerCase() } : {}),
+      preferredLanguage: request.preferredLanguage,
+    });
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {

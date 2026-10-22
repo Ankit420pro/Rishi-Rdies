@@ -2,13 +2,13 @@
 import { Redirect } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { getAuthSession, type AuthSession } from '../api/auth-session';
+import { getAuthenticatedSession, type AuthenticatedSession } from '../api/session';
 
 export default function Index() {
-  const [session, setSession] = useState<AuthSession | null | undefined>();
+  const [session, setSession] = useState<AuthenticatedSession | null | undefined>();
 
   useEffect(() => {
-    getAuthSession().then(setSession).catch(() => setSession(null));
+    getAuthenticatedSession().then(setSession).catch(() => setSession(null));
   }, []);
 
   if (session === undefined) {

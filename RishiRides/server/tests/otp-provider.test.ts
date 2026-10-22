@@ -22,6 +22,17 @@ test('Twilio Verify sends SMS to the Indian E.164 number', async () => {
   assert.equal(new URLSearchParams(requestedBody).get('Channel'), 'sms');
 });
 
+test('Twilio Verify can use WhatsApp when configured', async () => {
+  let requestedBody = '';
+  await sendTwilioOtp('9876543210', credentials, async (_input, init) => {
+    requestedBody = String(init?.body);
+    return new Response('{}', { status: 201 });
+  }, 'whatsapp');
+
+  assert.equal(new URLSearchParams(requestedBody).get('To'), '+919876543210');
+  assert.equal(new URLSearchParams(requestedBody).get('Channel'), 'whatsapp');
+});
+
 test('Twilio Verify accepts only an approved verification response', async () => {
   const approved = await verifyTwilioOtp('9876543210', '123456', credentials, async (_input, init) => {
     assert.equal(new URLSearchParams(String(init?.body)).get('Code'), '123456');

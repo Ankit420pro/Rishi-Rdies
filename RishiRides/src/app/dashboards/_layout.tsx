@@ -1,4 +1,4 @@
-import { Redirect, Stack, usePathname } from 'expo-router';
+import { Redirect, Stack, usePathname, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { getAuthenticatedSession, type AuthenticatedSession } from '../../api/session';
@@ -6,6 +6,7 @@ import { RideColors } from '../../constants/theme';
 
 export default function DashboardLayout() {
   const pathname = usePathname();
+  const router = useRouter();
   const [session, setSession] = useState<AuthenticatedSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,6 +26,19 @@ export default function DashboardLayout() {
   useEffect(() => {
     void loadSession();
   }, [loadSession]);
+
+  const requiredRole = pathname.startsWith('/dashboards/Drivers')
+    ? 'driver'
+    : 'passenger';
+  const roleMismatch = Boolean(session && session.role !== requiredRole);
+
+  useEffect(() => {
+    if (!loading && session && roleMismatch) {
+      router.replace(session.role === 'driver'
+        ? '/dashboards/Drivers/driver-dashboard'
+        : '/dashboards/passenger/passenger-dashboard');
+    }
+  }, [loading, roleMismatch, router, session]);
 
   if (loading) {
     return (
@@ -49,13 +63,12 @@ export default function DashboardLayout() {
     return <Redirect href="/login" />;
   }
 
-  const requiredRole = pathname.startsWith('/dashboards/Drivers')
-    ? 'driver'
-    : 'passenger';
-  if (session.role !== requiredRole) {
-    return <Redirect href={session.role === 'driver'
-      ? '/dashboards/Drivers/driver-dashboard'
-      : '/dashboards/passenger/passenger-dashboard'} />;
+  if (roleMismatch) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color={RideColors.accent} />
+      </View>
+    );
   }
 
   return <Stack screenOptions={{ headerShown: false }} />;

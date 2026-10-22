@@ -25,6 +25,12 @@ The Expo web target is optional:
 npm run web
 ```
 
+## Local demo mode
+
+When `EXPO_PUBLIC_API_URL` is unset, the app uses a local demo service and does not need PostgreSQL or the API server. Sign up separately as passenger and driver (the same mobile number can be used for both roles), then enter the displayed local demo OTP `1234`. Demo accounts, sessions, and ride requests are stored on the current browser/device only. Passenger bookings can be accepted and progressed by a driver signed in on that same browser/device. Demo trips, fares, and earnings are illustrative only; no real dispatch, tracking, payment, or message occurs. Clear the app/browser storage to remove demo accounts.
+
+When `EXPO_PUBLIC_API_URL` is set, authentication uses the configured API instead of local demo mode. The ride dispatch API is not implemented yet, so booking remains unavailable as a real trip.
+
 Web sign-in is intentionally blocked after OTP verification because the app does not persist credentials insecurely in browser storage.
 
 To run the API, configure `server/.env`, then run:
@@ -48,7 +54,7 @@ Passenger and driver profiles are separate role accounts. The same mobile number
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 
-For local development only, `DEV_OTP_SIMULATOR=true` returns a development code. For real delivery, set `DEV_OTP_SIMULATOR=false`, `OTP_PROVIDER=twilio-verify`, and the Twilio account/auth/service values in `server/.env`. Provider credentials must never be added to the Expo client's `.env` or source control. Production refuses to start without Twilio Verify configuration.
+For API development only, `DEV_OTP_SIMULATOR=true` returns a development code. For real delivery, set `DEV_OTP_SIMULATOR=false`, `OTP_PROVIDER=twilio-verify`, and the Twilio account/auth/service values in `server/.env`. Set `OTP_CHANNEL=whatsapp` to request WhatsApp delivery, or leave it as `sms`. WhatsApp requires an enabled Twilio Verify WhatsApp channel/sender and any required approved templates/business setup; this repository has no provider credentials, and no WhatsApp message is sent by local demo mode. Provider credentials must never be added to the Expo client's `.env` or source control. Production refuses to start without Twilio Verify configuration.
 
 This value is public client configuration, not a place for provider secrets. OTP provider credentials, database URLs, payment credentials, and messaging credentials belong only on a trusted server. No API URL or production credentials are included in this repository.
 

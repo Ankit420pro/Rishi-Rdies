@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import type { UserRole } from './login';
@@ -20,7 +21,9 @@ export async function saveAuthenticatedSession({
   mobile: string;
 }): Promise<void> {
   if (Platform.OS === 'web') {
-    throw new Error('Secure sign-in storage is not available on web. Use the Android app to sign in.');
+    if (!token.startsWith('demo.')) {
+      throw new Error('Secure sign-in storage is not available on web. Use the native app for live API sign-in.');
+    }
   }
   if (!token.trim()) {
     throw new Error('The authentication service did not return a session token.');
@@ -30,15 +33,17 @@ export async function saveAuthenticatedSession({
   }
 
   const session: AuthenticatedSession = { token, role, mobile };
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session));
+  if (Platform.OS === 'web') {
+    await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  } else {
+    await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session));
+  }
 }
 
 export async function getAuthenticatedSession(): Promise<AuthenticatedSession | null> {
-  if (Platform.OS === 'web') {
-    return null;
-  }
-
-  const stored = await SecureStore.getItemAsync(SESSION_KEY);
+  const stored = Platform.OS === 'web'
+    ? await AsyncStorage.getItem(SESSION_KEY)
+    : await SecureStore.getItemAsync(SESSION_KEY);
   if (!stored) {
     return null;
   }
@@ -63,6 +68,7 @@ export async function getAuthenticatedSession(): Promise<AuthenticatedSession | 
   ) {
     throw new Error('The saved sign-in session is invalid. Please sign in again.');
   }
+  if (Platform.OS === 'web' && !value.token.startsWith('demo.')) return null;
 
   return {
     token: value.token,
@@ -73,6 +79,7 @@ export async function getAuthenticatedSession(): Promise<AuthenticatedSession | 
 
 export async function clearAuthenticatedSession(): Promise<void> {
   if (Platform.OS === 'web') {
+    await AsyncStorage.removeItem(SESSION_KEY);
     return;
   }
 

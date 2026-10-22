@@ -8,6 +8,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string().default('1h'),
   DEV_OTP_SIMULATOR: z.enum(['true', 'false']).default('false'),
   OTP_PROVIDER: z.enum(['unconfigured', 'twilio-verify']).default('unconfigured'),
+  OTP_CHANNEL: z.enum(['sms', 'whatsapp']).default('sms'),
   TWILIO_ACCOUNT_SID: z.string().optional(),
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_VERIFY_SERVICE_SID: z.string().optional(),

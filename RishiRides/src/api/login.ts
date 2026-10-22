@@ -1,3 +1,5 @@
+import { startDemoLogin } from './demo-auth';
+
 export type UserRole = 'passenger' | 'driver';
 
 export type LoginResponse = {
@@ -20,7 +22,7 @@ export async function loginUser(
   request: LoginRequest
 ): Promise<LoginResponse> {
   if (!API_BASE_URL) {
-    throw new Error('Sign-in is unavailable because the authentication service is not configured.');
+    return startDemoLogin(request.mobile, request.role);
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
