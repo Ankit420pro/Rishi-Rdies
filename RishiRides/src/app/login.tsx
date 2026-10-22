@@ -62,6 +62,7 @@ export default function LoginScreen() {
           role: response.role,
           sessionId: response.sessionId,
           developmentOtp: response.developmentOtp ?? '',
+          deliveryChannel: response.deliveryChannel ?? '',
         },
       });
     } catch (error) {

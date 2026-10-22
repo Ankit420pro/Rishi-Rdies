@@ -85,20 +85,25 @@ export default function PassengerDashboard() {
       }
 
       const current = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const [address] = await Location.reverseGeocodeAsync(current.coords);
-      const name = address
-        ? [address.name, address.street, address.district, address.city]
-            .filter((part, index, parts) => part && parts.indexOf(part) === index)
-            .join(', ')
-        : '';
-
       setPickupCoordinates(current.coords);
+      let name = '';
+      try {
+        const [address] = await Location.reverseGeocodeAsync(current.coords);
+        name = address
+          ? [address.name, address.street, address.district, address.city]
+              .filter((part, index, parts) => part && parts.indexOf(part) === index)
+              .join(', ')
+          : '';
+      } catch {
+        name = '';
+      }
+
       if (name) {
         setPickup(name);
         setLocationMessage('Pickup set from your device location.');
       } else {
-        setPickup('');
-        setLocationMessage('Location name unavailable. Enter a pickup point manually before booking.');
+        setPickup('My current location');
+        setLocationMessage('Device location selected. Address lookup is unavailable, so pickup is shown as “My current location”.');
       }
     } catch {
       setPickupCoordinates(null);

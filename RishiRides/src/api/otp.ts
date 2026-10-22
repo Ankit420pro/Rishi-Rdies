@@ -1,4 +1,5 @@
 import { resendDemoOtp, verifyDemoOtp } from './demo-auth';
+const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
 export type OtpResponse =
   | { verified: false; token?: string; role?: 'passenger' | 'driver' }
@@ -6,6 +7,7 @@ export type OtpResponse =
 
 export type OtpChallengeResponse = {
   sessionId: string;
+  deliveryChannel?: 'sms' | 'whatsapp' | 'demo';
   developmentOtp?: string;
 };
 
@@ -21,7 +23,8 @@ export async function verifyOtp(
   request: OtpRequest
 ): Promise<OtpResponse> {
   if (!API_BASE_URL) {
-    return verifyDemoOtp(request.sessionId, request.mobile, request.otp);
+    if (DEMO_MODE) return verifyDemoOtp(request.sessionId, request.mobile, request.otp);
+    throw new Error('Authentication API is not configured. Local OTP verification is disabled.');
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
@@ -48,7 +51,8 @@ export async function verifyOtp(
   const token = 'token' in payload ? payload.token : undefined;
   if (
     typeof verified !== 'boolean' ||
-    (token !== undefined && typeof token !== 'string')
+    (token !== undefined && typeof token !== 'string') ||
+    ('role' in payload && payload.role !== 'passenger' && payload.role !== 'driver')
   ) {
     throw new Error('The authentication service returned an invalid verification response.');
   }
@@ -57,7 +61,11 @@ export async function verifyOtp(
     if (typeof token !== 'string' || !token) {
       throw new Error('The authentication service returned an invalid verification response.');
     }
-    return { verified: true, token };
+    return {
+      verified: true,
+      token,
+      ...('role' in payload && (payload.role === 'passenger' || payload.role === 'driver') ? { role: payload.role } : {}),
+    };
   }
   return typeof token === 'string'
     ? { verified: false, token }
@@ -69,7 +77,8 @@ export async function resendOtp(
   mobile: string
 ): Promise<OtpChallengeResponse> {
   if (!API_BASE_URL) {
-    return resendDemoOtp(sessionId, mobile);
+    if (DEMO_MODE) return resendDemoOtp(sessionId, mobile);
+    throw new Error('Authentication API is not configured. OTP resend is unavailable.');
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/resend-otp`, {
@@ -89,6 +98,7 @@ export async function resendOtp(
     !('sessionId' in payload) ||
     typeof payload.sessionId !== 'string' ||
     !payload.sessionId ||
+    ('deliveryChannel' in payload && payload.deliveryChannel !== 'sms' && payload.deliveryChannel !== 'whatsapp' && payload.deliveryChannel !== 'demo') ||
     ('developmentOtp' in payload && typeof payload.developmentOtp !== 'string')
   ) {
     throw new Error('The authentication service returned an invalid resend response.');
@@ -96,6 +106,7 @@ export async function resendOtp(
 
   return {
     sessionId: payload.sessionId,
+    ...('deliveryChannel' in payload && (payload.deliveryChannel === 'sms' || payload.deliveryChannel === 'whatsapp' || payload.deliveryChannel === 'demo') ? { deliveryChannel: payload.deliveryChannel } : {}),
     ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string'
       ? { developmentOtp: payload.developmentOtp }
       : {}),

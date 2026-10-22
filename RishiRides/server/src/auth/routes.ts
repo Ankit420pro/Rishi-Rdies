@@ -74,6 +74,7 @@ authRouter.post('/login', requestLimit, async (request, response, next) => {
       mobile: user.phone,
       role: parsed.data.role,
       maskedMobile: `******${user.phone.slice(-4)}`,
+      deliveryChannel: config.developmentOtpEnabled ? 'demo' : config.OTP_CHANNEL,
       ...(developmentOtp ? { developmentOtp } : {}),
     });
   } catch (error) {
@@ -119,6 +120,7 @@ authRouter.post('/signup', requestLimit, async (request, response, next) => {
       mobile: user.phone,
       role: parsed.data.role,
       maskedMobile: `******${user.phone.slice(-4)}`,
+      deliveryChannel: config.developmentOtpEnabled ? 'demo' : config.OTP_CHANNEL,
       ...(developmentOtp ? { developmentOtp } : {}),
     });
   } catch (error) {
@@ -136,7 +138,11 @@ authRouter.post('/resend-otp', requestLimit, async (request, response, next) => 
     if (!user) return response.status(404).json({ error: { code: 'SESSION_NOT_FOUND', message: 'The verification session was not found.' } });
     const result = await issueOtp(user.id, parsed.data.mobile);
     const challenge = await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } });
-    return response.json({ sessionId: challenge.id, ...(result.developmentOtp ? { developmentOtp: result.developmentOtp } : {}) });
+    return response.json({
+      sessionId: challenge.id,
+      deliveryChannel: config.developmentOtpEnabled ? 'demo' : config.OTP_CHANNEL,
+      ...(result.developmentOtp ? { developmentOtp: result.developmentOtp } : {}),
+    });
   } catch (error) {
     return next(error);
   }
@@ -189,7 +195,11 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
 
     if (result.kind !== 'verified') return response.status(401).json({ error: { code: 'OTP_INVALID', message: 'The code is incorrect, expired, or already used.' } });
     const token = jwt.sign({ role: result.user.role }, config.JWT_SECRET, { subject: result.user.id, expiresIn: config.JWT_EXPIRES_IN as jwt.SignOptions['expiresIn'] });
-    return response.json({ verified: true, token });
+    return response.json({
+      verified: true,
+      token,
+      role: result.user.role === 'DRIVER' ? 'driver' : 'passenger',
+    });
   } catch (error) {
     return next(error);
   }

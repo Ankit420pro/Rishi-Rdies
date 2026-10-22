@@ -7,6 +7,7 @@ export type LoginResponse = {
   mobile: string;
   role: UserRole;
   maskedMobile: string;
+  deliveryChannel?: 'sms' | 'whatsapp' | 'demo';
   developmentOtp?: string;
 };
 
@@ -17,12 +18,14 @@ type LoginRequest = {
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
+const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
 export async function loginUser(
   request: LoginRequest
 ): Promise<LoginResponse> {
   if (!API_BASE_URL) {
-    return startDemoLogin(request.mobile, request.role);
+    if (DEMO_MODE) return startDemoLogin(request.mobile, request.role);
+    throw new Error('Authentication API is not configured. Start the RishiRide server, or explicitly enable local demo mode.');
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -57,6 +60,7 @@ export async function loginUser(
     mobile: payload.mobile,
     role: payload.role,
     maskedMobile: payload.maskedMobile,
+    ...('deliveryChannel' in payload && (payload.deliveryChannel === 'sms' || payload.deliveryChannel === 'whatsapp' || payload.deliveryChannel === 'demo') ? { deliveryChannel: payload.deliveryChannel } : {}),
     ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}),
   };
 }

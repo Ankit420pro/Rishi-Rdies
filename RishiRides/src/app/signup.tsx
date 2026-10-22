@@ -81,6 +81,7 @@ export default function SignupScreen() {
           role: response.role,
           sessionId: response.sessionId,
           developmentOtp: response.developmentOtp ?? '',
+          deliveryChannel: response.deliveryChannel ?? '',
           destination: destination ?? '',
         },
       });

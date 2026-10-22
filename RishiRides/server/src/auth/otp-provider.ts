@@ -30,7 +30,7 @@ export async function sendTwilioOtp(
   });
 
   if (!response.ok) {
-    throw new Error('The SMS provider could not send a verification code.');
+    throw new Error('The configured verification provider could not send a code.');
   }
 }
 
@@ -52,7 +52,7 @@ export async function verifyTwilioOtp(
   if (response.status === 400 || response.status === 404) {
     return false;
   }
-  if (!response.ok) throw new Error('The SMS provider could not verify the code.');
+  if (!response.ok) throw new Error('The configured verification provider could not verify the code.');
 
   const result: unknown = await response.json();
   return typeof result === 'object' && result !== null && 'status' in result && result.status === 'approved';

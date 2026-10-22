@@ -20,11 +20,12 @@ import { RishiColors } from '../constants/theme';
 export default function OtpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { mobile, role, sessionId, destination, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
+  const { mobile, role, sessionId, destination, deliveryChannel: initialDeliveryChannel, developmentOtp: initialDevelopmentOtp } = useLocalSearchParams<{
     mobile: string;
     role: UserRole;
     sessionId: string;
     destination?: string;
+    deliveryChannel?: string;
     developmentOtp?: string;
   }>();
   const [otp, setOtp] = useState('');
@@ -32,6 +33,7 @@ export default function OtpScreen() {
   const [resending, setResending] = useState(false);
   const [challengeId, setChallengeId] = useState(sessionId ?? '');
   const [developmentOtp, setDevelopmentOtp] = useState(initialDevelopmentOtp ?? '');
+  const [deliveryChannel, setDeliveryChannel] = useState(initialDeliveryChannel ?? '');
   const [resendSeconds, setResendSeconds] = useState(30);
   const otpLength = developmentOtp ? developmentOtp.length : 6;
 
@@ -85,13 +87,14 @@ export default function OtpScreen() {
       const challenge = await resendOtp(challengeId, mobile ?? '');
       setChallengeId(challenge.sessionId);
       setDevelopmentOtp(challenge.developmentOtp ?? '');
+      setDeliveryChannel(challenge.deliveryChannel ?? '');
       setOtp('');
       setResendSeconds(30);
       Alert.alert(
         challenge.developmentOtp ? 'Demo code ready' : 'OTP sent',
         challenge.developmentOtp
           ? 'Local demo code refreshed. No WhatsApp message was sent.'
-          : 'A new OTP was sent to your mobile number.'
+          : `A new OTP was sent by ${challenge.deliveryChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'} to your mobile number.`
       );
     } catch (error) {
       Alert.alert(
@@ -127,7 +130,7 @@ export default function OtpScreen() {
         </View>
         <Text style={styles.title}>Verify your number</Text>
         <Text style={styles.subtitle}>
-          Enter the {otpLength}-digit OTP sent to {mobile ? `******${mobile.slice(-4)}` : 'your mobile'}.
+          Enter the {otpLength}-digit OTP sent to {mobile ? `******${mobile.slice(-4)}` : 'your mobile'}{deliveryChannel === 'whatsapp' ? ' on WhatsApp' : deliveryChannel === 'sms' ? ' by SMS' : ''}.
         </Text>
 
         {developmentOtp.length > 0 && (

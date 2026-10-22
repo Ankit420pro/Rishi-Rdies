@@ -13,18 +13,22 @@ type SignupRequest = {
 };
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
+const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
 export async function signupUser(
   request: SignupRequest
 ): Promise<LoginResponse> {
   if (!API_BASE_URL) {
-    return startDemoSignup({
-      mobile: request.mobile,
-      role: request.role,
-      name: request.name.trim(),
-      ...(request.email?.trim() ? { email: request.email.trim().toLowerCase() } : {}),
-      preferredLanguage: request.preferredLanguage,
-    });
+    if (DEMO_MODE) {
+      return startDemoSignup({
+        mobile: request.mobile,
+        role: request.role,
+        name: request.name.trim(),
+        ...(request.email?.trim() ? { email: request.email.trim().toLowerCase() } : {}),
+        preferredLanguage: request.preferredLanguage,
+      });
+    }
+    throw new Error('Authentication API is not configured. Start the RishiRide server, or explicitly enable local demo mode.');
   }
 
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
@@ -63,6 +67,7 @@ export async function signupUser(
     mobile: payload.mobile,
     role: payload.role,
     maskedMobile: payload.maskedMobile,
+    ...('deliveryChannel' in payload && (payload.deliveryChannel === 'sms' || payload.deliveryChannel === 'whatsapp' || payload.deliveryChannel === 'demo') ? { deliveryChannel: payload.deliveryChannel } : {}),
     ...('developmentOtp' in payload && typeof payload.developmentOtp === 'string' ? { developmentOtp: payload.developmentOtp } : {}),
   };
 }
