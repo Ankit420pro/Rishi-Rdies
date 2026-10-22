@@ -37,12 +37,14 @@ npm run prisma:deploy
 npm run dev
 ```
 
+Passenger and driver profiles are separate role accounts. The same mobile number may have one account for each role; login and signup always use the selected role. Existing databases must apply the `20261022130000_role_scoped_phone` migration with `npm run prisma:deploy` before this behavior is available.
+
 ## Configuration
 
 `EXPO_PUBLIC_API_URL` is the base URL used by the login, signup and OTP clients. The included API implements:
 
 - `POST /auth/login` for existing accounts with `{ mobile, role }`.
-- `POST /auth/signup` with `{ name, mobile, role, preferredLanguage, termsAccepted, privacyAccepted }`.
+- `POST /auth/signup` with `{ name, mobile, role, preferredLanguage, termsAccepted, privacyAccepted, email? }`. Email is optional and stored when provided.
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 

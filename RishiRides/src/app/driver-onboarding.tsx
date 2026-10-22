@@ -63,12 +63,12 @@ export default function DriverOnboardingScreen() {
     void getAuthenticatedSession().then((session) => {
       if (!active) return;
       if (session?.role !== 'driver') {
-        router.replace('/login');
+        router.replace({ pathname: '/login', params: { role: 'driver' } });
         return;
       }
       setAuthorized(true);
     }).catch(() => {
-      if (active) router.replace('/login');
+      if (active) router.replace({ pathname: '/login', params: { role: 'driver' } });
     });
     return () => { active = false; };
   }, [router]);

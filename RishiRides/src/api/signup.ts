@@ -2,6 +2,7 @@ import type { LoginResponse, UserRole } from './login';
 
 type SignupRequest = {
   name: string;
+  email?: string;
   mobile: string;
   role: UserRole;
   preferredLanguage: 'en' | 'hi';
@@ -21,7 +22,11 @@ export async function signupUser(
   const response = await fetch(`${API_BASE_URL}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...request, name: request.name.trim() }),
+    body: JSON.stringify({
+      ...request,
+      name: request.name.trim(),
+      ...(request.email?.trim() ? { email: request.email.trim().toLowerCase() } : {}),
+    }),
   });
 
   if (!response.ok) {

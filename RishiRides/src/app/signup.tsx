@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { signupUser } from '../api/signup';
 import { RishiColors } from '../constants/theme';
+import AuthScenicFooter from '../components/auth-scenic-footer';
 
 type UserRole = 'passenger' | 'driver';
 
@@ -22,9 +23,10 @@ export default function SignupScreen() {
   const router = useRouter();
   const { role: initialRole, destination } = useLocalSearchParams<{ role?: string; destination?: string }>();
 
-  const [role, setRole] = useState<UserRole>(initialRole === 'driver' ? 'driver' : 'passenger');
+  const role: UserRole = initialRole === 'driver' ? 'driver' : 'passenger';
 
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'hi'>('en');
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -49,6 +51,10 @@ export default function SignupScreen() {
       );
       return;
     }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      Alert.alert('Invalid email', 'Enter a valid email address or leave it blank.');
+      return;
+    }
     if (!termsAccepted || !privacyAccepted) {
       Alert.alert(
         hindi ? 'सहमति आवश्यक है' : 'Consent required',
@@ -63,6 +69,7 @@ export default function SignupScreen() {
         mobile: cleanMobile,
         role,
         name: name.trim(),
+        ...(email.trim() ? { email: email.trim() } : {}),
         preferredLanguage,
         termsAccepted: true,
         privacyAccepted: true,
@@ -129,128 +136,13 @@ export default function SignupScreen() {
             RISHIRIDES
           </Text>
 
-          <Text style={styles.title}>
-            {hindi ? 'खाता बनाएँ' : 'Create account'}
-          </Text>
+          <Text style={styles.title}>{hindi ? 'खाता बनाएँ' : 'Create your account'}</Text>
 
           <Text style={styles.subtitle}>
-            {hindi ? 'RishiRides से जुड़ें' : 'Your number, verified before you ride'}
+            {hindi ? 'RishiRides से जुड़ें' : `Sign up as a ${role}`}
           </Text>
 
           {/* ROLE */}
-
-          <Text style={styles.roleLabel}>
-            {hindi ? 'खाता किसके लिए है' : 'CREATE ACCOUNT AS'}
-          </Text>
-
-          <View style={styles.roleContainer}>
-
-            {/* PASSENGER */}
-
-            <Pressable
-              style={[
-                styles.roleButton,
-                role === 'passenger' &&
-                  styles.roleButtonActive,
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: role === 'passenger' }}
-              onPress={() =>
-                setRole('passenger')
-              }
-            >
-              <View
-                style={[
-                  styles.roleIcon,
-                  role === 'passenger' &&
-                    styles.roleIconActive,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="account"
-                  size={24}
-                  color={
-                    role === 'passenger'
-                      ? RishiColors.background
-                      : RishiColors.mint
-                  }
-                />
-              </View>
-
-              <Text
-                style={[
-                  styles.roleText,
-                  role === 'passenger' &&
-                    styles.roleTextActive,
-                ]}
-              >
-                {hindi ? 'यात्री' : 'PASSENGER'}
-              </Text>
-
-              {role === 'passenger' && (
-                <MaterialCommunityIcons
-                  name="check-circle"
-                  size={18}
-                  color={RishiColors.background}
-                  style={styles.check}
-                />
-              )}
-            </Pressable>
-
-            {/* DRIVER */}
-
-            <Pressable
-              style={[
-                styles.roleButton,
-                role === 'driver' &&
-                  styles.roleButtonActive,
-              ]}
-              accessibilityRole="button"
-              accessibilityState={{ selected: role === 'driver' }}
-              onPress={() =>
-                setRole('driver')
-              }
-            >
-              <View
-                style={[
-                  styles.roleIcon,
-                  role === 'driver' &&
-                    styles.roleIconActive,
-                ]}
-              >
-                <MaterialCommunityIcons
-                  name="steering"
-                  size={24}
-                  color={
-                    role === 'driver'
-                      ? RishiColors.background
-                      : RishiColors.mint
-                  }
-                />
-              </View>
-
-              <Text
-                style={[
-                  styles.roleText,
-                  role === 'driver' &&
-                    styles.roleTextActive,
-                ]}
-              >
-                {hindi ? 'ड्राइवर' : 'DRIVER'}
-              </Text>
-
-              {role === 'driver' && (
-                <MaterialCommunityIcons
-                  name="check-circle"
-                  size={18}
-                  color={RishiColors.background}
-                  style={styles.check}
-                />
-              )}
-            </Pressable>
-          </View>
-
-          {/* NAME */}
 
           <Input
             icon="account"
@@ -259,7 +151,13 @@ export default function SignupScreen() {
             onChangeText={setName}
           />
 
-          {/* MOBILE */}
+          <Input
+            icon="email-outline"
+            placeholder={hindi ? 'ईमेल (वैकल्पिक)' : 'Email (optional)'}
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
 
           <Input
             icon="phone"
@@ -268,6 +166,7 @@ export default function SignupScreen() {
             onChangeText={setMobile}
             keyboardType="phone-pad"
             maxLength={10}
+            countryCode
           />
 
           <Text style={styles.optionLabel}>{hindi ? 'पसंदीदा भाषा' : 'PREFERRED LANGUAGE'}</Text>
@@ -313,7 +212,7 @@ export default function SignupScreen() {
             disabled={loading || !termsAccepted || !privacyAccepted}
           >
             <Text style={styles.signupButtonText}>
-              {loading ? (hindi ? 'कोड भेज रहे हैं...' : 'SENDING CODE...') : (hindi ? 'मोबाइल सत्यापित करें' : 'VERIFY MOBILE NUMBER')}
+              {loading ? (hindi ? 'कोड भेज रहे हैं...' : 'SENDING CODE...') : (hindi ? 'OTP भेजें' : 'SEND OTP')}
             </Text>
 
             {!loading && <MaterialCommunityIcons name="arrow-right" size={20} color={RishiColors.background} />}
@@ -327,9 +226,7 @@ export default function SignupScreen() {
             </Text>
 
             <Pressable
-              onPress={() =>
-                router.push('/login')
-              }
+              onPress={() => router.push({ pathname: '/login', params: { role } })}
             >
               <Text style={styles.loginLink}>
                 {' '}
@@ -337,6 +234,10 @@ export default function SignupScreen() {
               </Text>
             </Pressable>
           </View>
+          <Pressable accessibilityRole="button" style={styles.changeRole} onPress={() => router.replace('/auth/role')}>
+            <Text style={styles.changeRoleText}>Choose a different account type</Text>
+          </Pressable>
+          <AuthScenicFooter />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -368,6 +269,7 @@ function Input({
   onChangeText,
   keyboardType,
   maxLength,
+  countryCode,
 }: {
   icon: keyof typeof MaterialCommunityIcons.glyphMap;
   placeholder: string;
@@ -375,14 +277,12 @@ function Input({
   onChangeText: (text: string) => void;
   keyboardType?: any;
   maxLength?: number;
+  countryCode?: boolean;
 }) {
   return (
     <View style={styles.inputContainer}>
-      <MaterialCommunityIcons
-        name={icon}
-        size={21}
-        color={RishiColors.mint}
-      />
+      {countryCode ? <Text style={styles.countryCode}>🇮🇳  +91⌄</Text> : <MaterialCommunityIcons name={icon} size={21} color={RishiColors.mint} />}
+      {countryCode && <View style={styles.phoneDivider} />}
 
       <TextInput
         style={styles.input}
@@ -406,15 +306,15 @@ const styles = StyleSheet.create({
 
   scroll: {
     flexGrow: 1,
-    paddingTop: 30,
-    paddingBottom: 40,
+    paddingTop: 12,
+    paddingBottom: 28,
   },
 
   content: {
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    paddingTop: 56,
+    paddingTop: 20,
     paddingHorizontal: 24,
   },
 
@@ -433,9 +333,9 @@ const styles = StyleSheet.create({
   },
 
   logoCircle: {
-    width: 65,
-    height: 65,
-    borderRadius: 33,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     backgroundColor: RishiColors.mint,
     alignSelf: 'center',
     alignItems: 'center',
@@ -444,9 +344,9 @@ const styles = StyleSheet.create({
 
   logoText: {
     color: RishiColors.mint,
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '900',
-    letterSpacing: 2,
+    letterSpacing: 1,
     textAlign: 'center',
     marginTop: 9,
   },
@@ -455,8 +355,8 @@ const styles = StyleSheet.create({
     color: RishiColors.text,
     fontSize: 29,
     fontWeight: '900',
-    textAlign: 'left',
-    marginTop: 25,
+    textAlign: 'center',
+    marginTop: 18,
   },
 
   subtitle: {
@@ -593,5 +493,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '900',
   },
+  countryCode: { color: RishiColors.text, fontSize: 11, fontWeight: '800' },
+  phoneDivider: { width: 1, height: 22, backgroundColor: RishiColors.line, marginHorizontal: 10 },
+  changeRole: { alignItems: 'center', paddingVertical: 10 },
+  changeRoleText: { color: RishiColors.muted, fontSize: 10, fontWeight: '700' },
   disabledButton: { opacity: 0.6 },
 });

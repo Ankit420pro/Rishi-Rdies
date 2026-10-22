@@ -64,6 +64,7 @@ test('signup sends language and consent without collecting passenger driving doc
   try {
     await signupUser({
       name: 'A Driver',
+      email: 'Rider@example.com',
       mobile: '9876543210',
       role: 'passenger',
       preferredLanguage: 'hi',
@@ -72,6 +73,7 @@ test('signup sends language and consent without collecting passenger driving doc
     });
 
     assert.equal(requestBody.name, 'A Driver');
+    assert.equal(requestBody.email, 'rider@example.com');
     assert.equal(requestBody.role, 'passenger');
     assert.equal(requestBody.preferredLanguage, 'hi');
     assert.equal(requestBody.termsAccepted, true);

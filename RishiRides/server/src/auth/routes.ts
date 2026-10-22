@@ -21,6 +21,7 @@ const signupSchema = z.object({
   mobile: phoneSchema,
   role: z.enum(['passenger', 'driver']),
   name: z.string().trim().min(1).max(120),
+  email: z.email().trim().toLowerCase().optional(),
   preferredLanguage: z.enum(['en', 'hi']),
   termsAccepted: z.literal(true),
   privacyAccepted: z.literal(true),
@@ -62,11 +63,10 @@ authRouter.post('/login', requestLimit, async (request, response, next) => {
   try {
     const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
     const user = await prisma.user.findUnique({
-      where: { phone: parsed.data.mobile },
+      where: { phone_role: { phone: parsed.data.mobile, role } },
       select: { id: true, phone: true, role: true },
     });
     if (!user) return response.status(404).json({ error: { code: 'ACCOUNT_NOT_FOUND', message: 'No account was found for this number. Create an account first.' } });
-    if (user.role !== role) return response.status(409).json({ error: { code: 'ROLE_MISMATCH', message: 'This number is registered for a different account type.' } });
 
     const { developmentOtp } = await issueOtp(user.id, user.phone);
     return response.status(202).json({
@@ -87,15 +87,20 @@ authRouter.post('/signup', requestLimit, async (request, response, next) => {
   if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
-    const existing = await prisma.user.findUnique({ where: { phone: parsed.data.mobile }, select: { role: true } });
-    if (existing) return response.status(409).json({ error: { code: 'ACCOUNT_EXISTS', message: 'An account already exists for this number. Sign in instead.' } });
+    const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
+    const existing = await prisma.user.findUnique({
+      where: { phone_role: { phone: parsed.data.mobile, role } },
+      select: { role: true },
+    });
+    if (existing) return response.status(409).json({ error: { code: 'ACCOUNT_EXISTS', message: `A ${parsed.data.role} account already exists for this number. Sign in instead.` } });
 
     const acceptedAt = new Date();
     const user = await prisma.user.create({
       data: {
         phone: parsed.data.mobile,
         name: parsed.data.name,
-        role: parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER',
+        email: parsed.data.email,
+        role,
         preferredLanguage: parsed.data.preferredLanguage,
         termsAcceptedAt: acceptedAt,
         privacyAcceptedAt: acceptedAt,

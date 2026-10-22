@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -15,14 +15,16 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { loginUser } from '../api/login';
 import { RishiColors } from '../constants/theme';
+import AuthScenicFooter from '../components/auth-scenic-footer';
 
 type UserRole = 'passenger' | 'driver';
 
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { role: requestedRole } = useLocalSearchParams<{ role?: string }>();
 
-  const [role, setRole] = useState<UserRole>('passenger');
+  const role: UserRole = requestedRole === 'driver' ? 'driver' : 'passenger';
   const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -90,16 +92,14 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <MaterialCommunityIcons
-            name="arrow-left"
-            size={24}
-            color={RishiColors.text}
-          />
-        </Pressable>
+        <View style={styles.topBar}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Back" style={styles.backButton} onPress={() => router.back()}>
+            <MaterialCommunityIcons name="arrow-left" size={21} color={RishiColors.text} />
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => Alert.alert('RishiRide help', 'For sign-in assistance, contact RishiRide support after service setup.')}>
+            <Text style={styles.helpText}>Need help? ⓘ</Text>
+          </Pressable>
+        </View>
 
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
@@ -115,83 +115,9 @@ export default function LoginScreen() {
           </View>
         </View>
 
-        <Text style={styles.title}>
-          Sign in
-        </Text>
+        <Text style={styles.title}>Welcome back!</Text>
 
-        <Text style={styles.subtitle}>
-          Enter your mobile number to continue
-        </Text>
-
-        <View style={styles.roleContainer}>
-          <Pressable
-            style={[
-              styles.roleButton,
-              role === 'passenger' &&
-                styles.roleButtonActive,
-            ]}
-            onPress={() => setRole('passenger')}
-          >
-            <View
-              style={[
-                styles.roleIcon,
-                role === 'passenger' &&
-                  styles.roleIconActive,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="account"
-                size={24}
-                color={role === 'passenger' ? RishiColors.background : RishiColors.muted}
-              />
-            </View>
-
-            <Text
-              style={[
-                styles.roleText,
-                role === 'passenger' &&
-                  styles.roleTextActive,
-              ]}
-            >
-              Passenger
-            </Text>
-
-          </Pressable>
-
-          <Pressable
-            style={[
-              styles.roleButton,
-              role === 'driver' &&
-                styles.roleButtonActive,
-            ]}
-            onPress={() => setRole('driver')}
-          >
-            <View
-              style={[
-                styles.roleIcon,
-                role === 'driver' &&
-                  styles.roleIconActive,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="steering"
-                size={24}
-                color={role === 'driver' ? RishiColors.background : RishiColors.muted}
-              />
-            </View>
-
-            <Text
-              style={[
-                styles.roleText,
-                role === 'driver' &&
-                  styles.roleTextActive,
-              ]}
-            >
-              Driver
-            </Text>
-
-          </Pressable>
-        </View>
+        <Text style={styles.subtitle}>Log in to continue as a {role}</Text>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>
@@ -199,15 +125,12 @@ export default function LoginScreen() {
           </Text>
 
           <View style={styles.inputContainer}>
-            <MaterialCommunityIcons
-              name="phone"
-              size={21}
-              color={RishiColors.mint}
-            />
+            <Text style={styles.countryCode}>🇮🇳  +91⌄</Text>
+            <View style={styles.phoneDivider} />
 
             <TextInput
               style={styles.input}
-              placeholder="Enter 10-digit mobile number"
+              placeholder="Enter your mobile number"
               placeholderTextColor={RishiColors.muted}
               value={mobile}
               onChangeText={(text) => {
@@ -235,7 +158,7 @@ export default function LoginScreen() {
           <Text style={styles.loginButtonText}>
             {loading
               ? 'SENDING CODE...'
-              : 'CONTINUE WITH PHONE'}
+              : 'SEND OTP'}
           </Text>
 
           {!loading && (
@@ -253,7 +176,7 @@ export default function LoginScreen() {
           </Text>
 
           <Pressable
-            onPress={() => router.push('/signup')}
+            onPress={() => router.push({ pathname: '/signup', params: { role } })}
           >
             <Text style={styles.signupLink}>
               {' '}Sign Up
@@ -272,6 +195,10 @@ export default function LoginScreen() {
             Your information is secure with RishiRides.
           </Text>
         </View>
+        <Pressable accessibilityRole="button" style={styles.changeRole} onPress={() => router.replace('/auth/role')}>
+          <Text style={styles.changeRoleText}>Choose a different account type</Text>
+        </Pressable>
+        <AuthScenicFooter />
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -291,28 +218,28 @@ const styles = StyleSheet.create({
   },
 
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: RishiColors.surface,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 25,
-    borderWidth: 1,
-    borderColor: RishiColors.line,
+    marginBottom: 0,
   },
+  topBar: { minHeight: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 },
+  helpText: { color: RishiColors.text, fontSize: 11, fontWeight: '700' },
 
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    marginBottom: 54,
+    justifyContent: 'center',
+    marginBottom: 25,
   },
 
   logoCircle: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 43,
+    height: 43,
+    borderRadius: 11,
     backgroundColor: RishiColors.mint,
     justifyContent: 'center',
     alignItems: 'center',
@@ -334,16 +261,18 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 32,
-    fontWeight: '800',
+    fontSize: 25,
+    fontWeight: '900',
     color: RishiColors.text,
+    textAlign: 'center',
   },
 
   subtitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: RishiColors.muted,
-    marginTop: 8,
-    marginBottom: 30,
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 28,
   },
 
   label: {
@@ -406,9 +335,9 @@ const styles = StyleSheet.create({
   },
 
   inputContainer: {
-    height: 58,
+    height: 52,
     backgroundColor: RishiColors.surfaceInput,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: RishiColors.line,
     flexDirection: 'row',
@@ -422,10 +351,12 @@ const styles = StyleSheet.create({
     color: RishiColors.text,
     marginLeft: 10,
   },
+  countryCode: { color: RishiColors.text, fontSize: 12, fontWeight: '800' },
+  phoneDivider: { width: 1, height: 22, backgroundColor: RishiColors.line, marginHorizontal: 10 },
 
   loginButton: {
-    height: 56,
-    borderRadius: 12,
+    height: 48,
+    borderRadius: 7,
     backgroundColor: RishiColors.mint,
     flexDirection: 'row',
     alignItems: 'center',
@@ -451,6 +382,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 25,
   },
+  changeRole: { alignItems: 'center', paddingVertical: 10 },
+  changeRoleText: { color: RishiColors.muted, fontSize: 10, fontWeight: '700' },
 
   signupText: {
     color: RishiColors.muted,

@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -32,7 +32,14 @@ export default function OtpScreen() {
   const [resending, setResending] = useState(false);
   const [challengeId, setChallengeId] = useState(sessionId ?? '');
   const [developmentOtp, setDevelopmentOtp] = useState(initialDevelopmentOtp ?? '');
+  const [resendSeconds, setResendSeconds] = useState(30);
   const otpLength = developmentOtp ? developmentOtp.length : 6;
+
+  useEffect(() => {
+    if (resendSeconds <= 0) return;
+    const timer = setTimeout(() => setResendSeconds((seconds) => seconds - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendSeconds]);
 
   const handleVerify = async () => {
     if (otp.length !== otpLength) {
@@ -69,12 +76,14 @@ export default function OtpScreen() {
   };
 
   const handleResend = async () => {
+    if (resendSeconds > 0 || resending) return;
     try {
       setResending(true);
       const challenge = await resendOtp(challengeId, mobile ?? '');
       setChallengeId(challenge.sessionId);
       setDevelopmentOtp(challenge.developmentOtp ?? '');
       setOtp('');
+      setResendSeconds(30);
       Alert.alert('OTP sent', 'A new OTP has been sent to your mobile number.');
     } catch (error) {
       Alert.alert(
@@ -99,6 +108,10 @@ export default function OtpScreen() {
       >
         <Pressable style={styles.backButton} onPress={() => router.back()}>
           <MaterialCommunityIcons name="arrow-left" size={24} color={RishiColors.text} />
+        </Pressable>
+        <Pressable accessibilityRole="button" style={styles.editPhone} onPress={() => router.back()}>
+          <MaterialCommunityIcons name="pencil-outline" size={15} color={RishiColors.mint} />
+          <Text style={styles.editPhoneText}>Edit phone number</Text>
         </Pressable>
 
         <View style={styles.logoCircle}>
@@ -142,8 +155,10 @@ export default function OtpScreen() {
           )}
         </Pressable>
 
-        <Pressable onPress={handleResend} disabled={resending}>
-          <Text style={[styles.resendText, resending && styles.disabledButton]}>{resending ? 'SENDING...' : 'Resend OTP'}</Text>
+        <Pressable onPress={() => void handleResend()} disabled={resending || resendSeconds > 0}>
+          <Text style={[styles.resendText, (resending || resendSeconds > 0) && styles.resendDisabled]}>
+            {resending ? 'SENDING...' : resendSeconds > 0 ? `Resend code in 0:${String(resendSeconds).padStart(2, '0')}` : 'Resend OTP'}
+          </Text>
         </Pressable>
 
       </View>
@@ -165,6 +180,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: RishiColors.line,
   },
+  editPhone: { alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, marginTop: -48, marginBottom: 34 },
+  editPhoneText: { color: RishiColors.mint, fontSize: 11, fontWeight: '800' },
   logoCircle: {
     width: 70,
     height: 70,
@@ -204,6 +221,7 @@ const styles = StyleSheet.create({
   disabledButton: { opacity: 0.65 },
   verifyText: { color: RishiColors.background, fontSize: 15, fontWeight: '900' },
   resendText: { color: RishiColors.mint, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 25 },
+  resendDisabled: { color: RishiColors.muted },
   developmentCode: { minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: RishiColors.line, backgroundColor: RishiColors.surface, borderRadius: 10, marginBottom: 22, paddingHorizontal: 12 },
   developmentCodeText: { color: RishiColors.warning, fontSize: 12, fontWeight: '700' },
 });

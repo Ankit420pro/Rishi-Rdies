@@ -8,16 +8,16 @@ import '@/global.css';
 import { Platform } from 'react-native';
 
 export const RishiColors = {
-  background: '#071713',
-  surface: '#10251E',
-  surfaceRaised: '#18372E',
-  surfaceInput: '#1C4036',
-  line: '#315448',
-  mint: '#9BE8C5',
-  text: '#F2F7F3',
-  muted: '#A8BDB3',
-  warning: '#E9C47B',
-  danger: '#F07E7E',
+  background: '#F4F7F3',
+  surface: '#FFFFFF',
+  surfaceRaised: '#EEF3EE',
+  surfaceInput: '#FFFFFF',
+  line: '#DCE5DE',
+  mint: '#087F68',
+  text: '#183A32',
+  muted: '#718078',
+  warning: '#9A6D16',
+  danger: '#B94343',
 } as const;
 
 export const RideColors = {

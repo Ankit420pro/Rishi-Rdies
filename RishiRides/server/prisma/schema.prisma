@@ -21,8 +21,9 @@ enum UserStatus {
 
 model User {
   id                String     @id @default(uuid()) @db.Uuid
-  phone             String     @unique @db.VarChar(10)
+  phone             String     @db.VarChar(10)
   name              String?    @db.VarChar(120)
+  email             String?    @db.VarChar(254)
   preferredLanguage String     @default("en") @db.VarChar(2)
   termsAcceptedAt   DateTime?  @db.Timestamp(3)
   privacyAcceptedAt DateTime?  @db.Timestamp(3)
@@ -32,6 +33,8 @@ model User {
   updatedAt         DateTime   @updatedAt
   challenges OtpChallenge[]
 
+  @@unique([phone, role])
+  @@unique([email, role])
   @@index([role, status])
 }
 

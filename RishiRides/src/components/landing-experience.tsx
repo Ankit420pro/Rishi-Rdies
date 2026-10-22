@@ -43,10 +43,10 @@ export default function LandingExperience() {
             <Text style={styles.brandCity}>RISHIKESH</Text>
           </Pressable>
           <View style={styles.headerActions}>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.loginButton}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/auth/role')} style={styles.loginButton}>
               <Text style={styles.loginLabel}>Sign in</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => openSignup('passenger')} style={styles.joinButton}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/auth/role')} style={styles.joinButton}>
               <Text style={styles.joinLabel}>Join</Text>
               <MaterialCommunityIcons name="arrow-up-right" size={16} color={colors.white} />
             </Pressable>
