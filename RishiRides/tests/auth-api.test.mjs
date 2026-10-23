@@ -9,13 +9,13 @@ const { signupUser } = await import('../src/api/signup.ts');
 
 const originalFetch = globalThis.fetch;
 
-test('login API rejects an invalid role response', async () => {
+test('login API rejects a driver role response', async () => {
   globalThis.fetch = async () => ({
     ok: true,
     json: async () => ({
       sessionId: 'session',
       mobile: '9876543210',
-      role: 'admin',
+      role: 'driver',
       maskedMobile: '******3210',
     }),
   });

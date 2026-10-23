@@ -17,13 +17,9 @@ import { signupUser } from '../api/signup';
 import { RishiColors } from '../constants/theme';
 import AuthScenicFooter from '../components/auth-scenic-footer';
 
-type UserRole = 'passenger' | 'driver';
-
 export default function SignupScreen() {
   const router = useRouter();
-  const { role: initialRole, destination } = useLocalSearchParams<{ role?: string; destination?: string }>();
-
-  const role: UserRole = initialRole === 'driver' ? 'driver' : 'passenger';
+  const { destination } = useLocalSearchParams<{ destination?: string }>();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,7 +63,7 @@ export default function SignupScreen() {
       setLoading(true);
       const response = await signupUser({
         mobile: cleanMobile,
-        role,
+        role: 'passenger',
         name: name.trim(),
         ...(email.trim() ? { email: email.trim() } : {}),
         preferredLanguage,
@@ -140,7 +136,7 @@ export default function SignupScreen() {
           <Text style={styles.title}>{hindi ? 'खाता बनाएँ' : 'Create your account'}</Text>
 
           <Text style={styles.subtitle}>
-            {hindi ? 'RishiRides से जुड़ें' : `Sign up as a ${role}`}
+            {hindi ? 'RishiRides से जुड़ें' : 'Sign up as a passenger'}
           </Text>
 
           {/* ROLE */}
@@ -227,7 +223,7 @@ export default function SignupScreen() {
             </Text>
 
             <Pressable
-              onPress={() => router.push({ pathname: '/login', params: { role } })}
+              onPress={() => router.push('/login')}
             >
               <Text style={styles.loginLink}>
                 {' '}
@@ -235,9 +231,6 @@ export default function SignupScreen() {
               </Text>
             </Pressable>
           </View>
-          <Pressable accessibilityRole="button" style={styles.changeRole} onPress={() => router.replace('/auth/role')}>
-            <Text style={styles.changeRoleText}>Choose a different account type</Text>
-          </Pressable>
           <AuthScenicFooter />
         </View>
       </ScrollView>
@@ -368,60 +361,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  roleLabel: {
-    color: RishiColors.muted,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 18,
-  },
-
-  roleButton: {
-    flex: 1,
-    height: 70,
-    backgroundColor: RishiColors.surface,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: RishiColors.line,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  roleButtonActive: {
-    backgroundColor: RishiColors.mint,
-    borderColor: RishiColors.mint,
-  },
-
-  roleIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: RishiColors.surfaceRaised,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  roleIconActive: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-
-  roleText: {
-    color: RishiColors.muted,
-    fontSize: 9,
-    fontWeight: '900',
-    marginTop: 4,
-  },
-
-  roleTextActive: {
-    color: RishiColors.background,
-  },
-
   check: {
     position: 'absolute',
     top: 7,
@@ -496,7 +435,5 @@ const styles = StyleSheet.create({
   },
   countryCode: { color: RishiColors.text, fontSize: 11, fontWeight: '800' },
   phoneDivider: { width: 1, height: 22, backgroundColor: RishiColors.line, marginHorizontal: 10 },
-  changeRole: { alignItems: 'center', paddingVertical: 10 },
-  changeRoleText: { color: RishiColors.muted, fontSize: 10, fontWeight: '700' },
   disabledButton: { opacity: 0.6 },
 });

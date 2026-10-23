@@ -1,46 +1,31 @@
-import { Redirect, Stack, usePathname, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { Redirect, Stack } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { getAuthenticatedSession, type AuthenticatedSession } from '../../api/session';
 import { RideColors } from '../../constants/theme';
 
 export default function DashboardLayout() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [session, setSession] = useState<AuthenticatedSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<AuthenticatedSession | null | undefined>();
   const [error, setError] = useState('');
-
-  const loadSession = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      setSession(await getAuthenticatedSession());
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to read your sign-in session.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
-    void loadSession();
-  }, [loadSession]);
+    let active = true;
+    getAuthenticatedSession()
+      .then((value) => {
+        if (active) setSession(value);
+      })
+      .catch((reason: unknown) => {
+        if (!active) return;
+        setError(reason instanceof Error ? reason.message : 'Unable to read your sign-in session.');
+        setSession(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [retryKey]);
 
-  const requiredRole = pathname.startsWith('/dashboards/Drivers')
-    ? 'driver'
-    : 'passenger';
-  const roleMismatch = Boolean(session && session.role !== requiredRole);
-
-  useEffect(() => {
-    if (!loading && session && roleMismatch) {
-      router.replace(session.role === 'driver'
-        ? '/dashboards/Drivers/driver-dashboard'
-        : '/dashboards/passenger/passenger-dashboard');
-    }
-  }, [loading, roleMismatch, router, session]);
-
-  if (loading) {
+  if (session === undefined) {
     return (
       <View style={styles.center}>
         <ActivityIndicator color={RideColors.accent} />
@@ -52,24 +37,18 @@ export default function DashboardLayout() {
     return (
       <View style={styles.center}>
         <Text accessibilityRole="alert" style={styles.message}>{error}</Text>
-        <Text accessibilityRole="button" onPress={() => void loadSession()} style={styles.retry}>
+        <Text accessibilityRole="button" onPress={() => {
+          setError('');
+          setSession(undefined);
+          setRetryKey((key) => key + 1);
+        }} style={styles.retry}>
           Retry
         </Text>
       </View>
     );
   }
 
-  if (!session) {
-    return <Redirect href="/login" />;
-  }
-
-  if (roleMismatch) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color={RideColors.accent} />
-      </View>
-    );
-  }
+  if (!session) return <Redirect href="/login" />;
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

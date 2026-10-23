@@ -2,8 +2,8 @@ import { resendDemoOtp, verifyDemoOtp } from './demo-auth';
 const DEMO_MODE = process.env.EXPO_PUBLIC_DEMO_MODE === 'true';
 
 export type OtpResponse =
-  | { verified: false; token?: string; role?: 'passenger' | 'driver' }
-  | { verified: true; token: string; role?: 'passenger' | 'driver' };
+  | { verified: false; token?: string; role?: 'passenger' }
+  | { verified: true; token: string; role?: 'passenger' };
 
 export type OtpChallengeResponse = {
   sessionId: string;
@@ -52,7 +52,7 @@ export async function verifyOtp(
   if (
     typeof verified !== 'boolean' ||
     (token !== undefined && typeof token !== 'string') ||
-    ('role' in payload && payload.role !== 'passenger' && payload.role !== 'driver')
+    ('role' in payload && payload.role !== 'passenger')
   ) {
     throw new Error('The authentication service returned an invalid verification response.');
   }
@@ -64,7 +64,7 @@ export async function verifyOtp(
     return {
       verified: true,
       token,
-      ...('role' in payload && (payload.role === 'passenger' || payload.role === 'driver') ? { role: payload.role } : {}),
+      ...('role' in payload && payload.role === 'passenger' ? { role: payload.role } : {}),
     };
   }
   return typeof token === 'string'

@@ -47,8 +47,7 @@ function SiteHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const isHome = useLocation().pathname === '/';
   const links = [
-    { to: '/sign-up?role=passenger', label: 'Passenger', end: false },
-    { to: '/sign-up?role=driver', label: 'Driver', end: false },
+    { to: '/destinations', label: 'Destinations', end: false },
   ];
   return (
     <header className={`site-header${isHome ? ' site-header-home' : ''}`}>
@@ -99,12 +98,6 @@ function HomePage() {
           </div>
           <BookingForm />
         </div>
-      </section>
-
-      <section className="driver-invite" aria-label="Driver registration">
-        <div className="driver-invite-mark"><Navigation size={18} /></div>
-        <div><p className="eyebrow">DRIVE WITH RISHIRIDE</p><h2>Local drivers start here.</h2><p>Register by phone, then review the four onboarding stages. Document upload stays disabled until private review is ready.</p></div>
-        <Link className="driver-invite-link" to="/sign-up?role=driver">Driver registration <ArrowRight size={16} /></Link>
       </section>
 
       <section className="discover-section">
@@ -252,7 +245,7 @@ function DestinationPage() {
 
 type WebOtpState = {
   mode: 'sign-in' | 'sign-up';
-  role: 'passenger' | 'driver';
+  role: 'passenger';
   mobile: string;
   sessionId: string;
   developmentOtp?: string;
@@ -272,9 +265,7 @@ async function readApiError(response: Response, fallback: string): Promise<strin
 }
 
 function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [role, setRole] = useState<'passenger' | 'driver'>(searchParams.get('role') === 'driver' ? 'driver' : 'passenger');
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [preferredLanguage, setPreferredLanguage] = useState<'en' | 'hi'>('en');
@@ -283,7 +274,6 @@ function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const isSignUp = mode === 'sign-up';
-  const roleName = role === 'passenger' ? 'Passenger' : 'Driver';
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -303,12 +293,12 @@ function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(isSignUp
-          ? { name: name.trim(), mobile, role, preferredLanguage, termsAccepted: true, privacyAccepted: true }
-          : { mobile, role }),
+          ? { name: name.trim(), mobile, role: 'passenger', preferredLanguage, termsAccepted: true, privacyAccepted: true }
+          : { mobile, role: 'passenger' }),
       });
       if (!response.ok) throw new Error(await readApiError(response, 'Unable to start phone verification.'));
       const payload: unknown = await response.json();
-      if (typeof payload !== 'object' || payload === null || !('sessionId' in payload) || typeof payload.sessionId !== 'string' || !payload.sessionId || !('mobile' in payload) || typeof payload.mobile !== 'string' || !('role' in payload) || (payload.role !== 'passenger' && payload.role !== 'driver')) {
+      if (typeof payload !== 'object' || payload === null || !('sessionId' in payload) || typeof payload.sessionId !== 'string' || !payload.sessionId || !('mobile' in payload) || typeof payload.mobile !== 'string' || !('role' in payload) || payload.role !== 'passenger') {
         throw new Error('The authentication service returned an invalid verification session.');
       }
       navigate('/verify', { state: {
@@ -339,10 +329,6 @@ function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           <p className="eyebrow">{isSignUp ? 'CREATE AN ACCOUNT' : 'WELCOME BACK'}</p>
           <h1>{isSignUp ? 'Start with your phone.' : 'Sign in with your phone.'}</h1>
           <p className="account-subtitle">We’ll send a one-time code by SMS. No password needed.</p>
-          <div className="role-toggle" role="group" aria-label="Account type">
-            <button type="button" className={role === 'passenger' ? 'selected' : ''} onClick={() => setRole('passenger')}><span className="role-initial">P</span> Passenger</button>
-            <button type="button" className={role === 'driver' ? 'selected' : ''} onClick={() => setRole('driver')}><span className="role-initial">D</span> Driver</button>
-          </div>
           <form className="account-form" onSubmit={submit}>
             {isSignUp && <label>Full name<input required autoComplete="name" maxLength={120} value={name} onChange={(event) => setName(event.target.value)} placeholder="Your legal name" /></label>}
             <label>Mobile number<input required type="tel" inputMode="numeric" autoComplete="tel-national" pattern="[0-9]{10}" maxLength={10} value={mobile} onChange={(event) => setMobile(event.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit Indian mobile number" /></label>
@@ -352,10 +338,10 @@ function AccountPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
               <label className="consent-check"><input type="checkbox" checked={privacyAccepted} onChange={(event) => setPrivacyAccepted(event.target.checked)} /><span>I have read and accept the <Link to="/privacy">Privacy Policy</Link>.</span></label>
             </>}
             {message && <p className="form-notice account-notice" role="alert">{message}</p>}
-            <button className="account-submit" type="submit" disabled={loading || (isSignUp && (!termsAccepted || !privacyAccepted))}>{loading ? 'Contacting SMS service…' : isSignUp ? `Create ${roleName.toLowerCase()} account` : `Continue as ${roleName.toLowerCase()}`}<ArrowRight size={16} /></button>
+            <button className="account-submit" type="submit" disabled={loading || (isSignUp && (!termsAccepted || !privacyAccepted))}>{loading ? 'Contacting SMS service…' : isSignUp ? 'Create passenger account' : 'Continue as passenger'}<ArrowRight size={16} /></button>
           </form>
           <p className="switch-account">{isSignUp ? 'Already registered?' : 'New to RishiRide?'} <Link to={isSignUp ? '/sign-in' : '/sign-up'}>{isSignUp ? 'Sign in' : 'Create an account'}</Link></p>
-          <p className="auth-privacy"><ShieldCheck size={14} />{role === 'passenger' ? 'Passenger signup does not ask for driving documents or Aadhaar.' : 'Driver accounts remain pending until required checks and admin review are complete.'}</p>
+          <p className="auth-privacy"><ShieldCheck size={14} />Passenger signup does not ask for driving documents or Aadhaar.</p>
         </div>
       </section>
     </div>
@@ -443,7 +429,7 @@ function VerifyPage() {
             <button className="account-submit" type="submit" disabled={loading}>{loading ? 'Verifying…' : 'Verify phone'}<ArrowRight size={16} /></button>
           </form>}
           {!verified && <button className="resend-button" onClick={() => void resend()} disabled={loading}>Resend code</button>}
-          {verified && <div className="verified-next"><ShieldCheck size={18} /><span>{session.role === 'driver' ? 'Your driver application remains pending until all applicable checks and admin review are complete.' : 'No driving licence or Aadhaar is required for ordinary passenger signup.'}</span></div>}
+          {verified && <div className="verified-next"><ShieldCheck size={18} /><span>No driving licence or Aadhaar is required for ordinary passenger signup.</span></div>}
           <Link className="switch-account" to="/">Return to RishiRide</Link>
         </div>
       </section>

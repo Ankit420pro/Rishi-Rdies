@@ -38,7 +38,7 @@ export async function getAuthSession(): Promise<AuthSession | null> {
   }
 
   const [role, mobile] = await AsyncStorage.multiGet(['userRole', 'userMobile']);
-  if (!token || (role[1] !== 'passenger' && role[1] !== 'driver')) {
+  if (!token || role[1] !== 'passenger') {
     await clearAuthSession();
     return null;
   }

@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
@@ -17,14 +17,9 @@ import { loginUser } from '../api/login';
 import { RishiColors } from '../constants/theme';
 import AuthScenicFooter from '../components/auth-scenic-footer';
 
-type UserRole = 'passenger' | 'driver';
-
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { role: requestedRole } = useLocalSearchParams<{ role?: string }>();
-
-  const role: UserRole = requestedRole === 'driver' ? 'driver' : 'passenger';
   const [mobile, setMobile] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +47,7 @@ export default function LoginScreen() {
 
       const response = await loginUser({
         mobile: cleanMobile,
-        role,
+        role: 'passenger',
       });
 
       router.push({
@@ -118,7 +113,7 @@ export default function LoginScreen() {
 
         <Text style={styles.title}>Welcome back!</Text>
 
-        <Text style={styles.subtitle}>Log in to continue as a {role}</Text>
+        <Text style={styles.subtitle}>Log in to continue as a passenger</Text>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>
@@ -173,11 +168,11 @@ export default function LoginScreen() {
 
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>
-            Don't have an account?
+            New to RishiRides?
           </Text>
 
           <Pressable
-            onPress={() => router.push({ pathname: '/signup', params: { role } })}
+            onPress={() => router.push('/signup')}
           >
             <Text style={styles.signupLink}>
               {' '}Sign Up
@@ -196,9 +191,6 @@ export default function LoginScreen() {
             Your information is secure with RishiRides.
           </Text>
         </View>
-        <Pressable accessibilityRole="button" style={styles.changeRole} onPress={() => router.replace('/auth/role')}>
-          <Text style={styles.changeRoleText}>Choose a different account type</Text>
-        </Pressable>
         <AuthScenicFooter />
       </ScrollView>
     </KeyboardAvoidingView>
@@ -284,53 +276,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    padding: 5,
-    borderRadius: 14,
-    backgroundColor: RishiColors.surface,
-    marginBottom: 28,
-  },
-
-  roleButton: {
-    flex: 1,
-    minHeight: 48,
-    borderRadius: 10,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-  },
-
-  roleButtonActive: {
-    backgroundColor: RishiColors.mint,
-  },
-
-  roleIcon: {
-    width: 27,
-    height: 27,
-    borderRadius: 14,
-    backgroundColor: RishiColors.surfaceRaised,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  roleIconActive: {
-    backgroundColor: 'rgba(7, 23, 19, 0.12)',
-  },
-
-  roleText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: RishiColors.muted,
-  },
-
-  roleTextActive: {
-    color: RishiColors.background,
-  },
-
   inputGroup: {
     marginBottom: 22,
   },
@@ -383,9 +328,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 25,
   },
-  changeRole: { alignItems: 'center', paddingVertical: 10 },
-  changeRoleText: { color: RishiColors.muted, fontSize: 10, fontWeight: '700' },
-
   signupText: {
     color: RishiColors.muted,
     fontSize: 14,

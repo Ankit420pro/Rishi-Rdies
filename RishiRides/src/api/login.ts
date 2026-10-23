@@ -1,6 +1,6 @@
 import { startDemoLogin } from './demo-auth';
 
-export type UserRole = 'passenger' | 'driver';
+export type UserRole = 'passenger';
 
 export type LoginResponse = {
   sessionId: string;
@@ -48,7 +48,7 @@ export async function loginUser(
     !('mobile' in payload) ||
     typeof payload.mobile !== 'string' ||
     !('role' in payload) ||
-    (payload.role !== 'passenger' && payload.role !== 'driver') ||
+    payload.role !== 'passenger' ||
     !('maskedMobile' in payload) ||
     typeof payload.maskedMobile !== 'string'
   ) {
