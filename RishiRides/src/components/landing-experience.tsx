@@ -29,8 +29,8 @@ export default function LandingExperience() {
   const { width } = useWindowDimensions();
   const wide = width >= 760;
 
-  const openSignup = (role: 'passenger' | 'driver', destination?: string) => {
-    router.push({ pathname: '/signup', params: { role, ...(destination ? { destination } : {}) } });
+  const openSignup = (destination?: string) => {
+    router.push({ pathname: '/signup', params: destination ? { destination } : {} });
   };
 
   return (
@@ -43,10 +43,10 @@ export default function LandingExperience() {
             <Text style={styles.brandCity}>RISHIKESH</Text>
           </Pressable>
           <View style={styles.headerActions}>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/auth/role')} style={styles.loginButton}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/login')} style={styles.loginButton}>
               <Text style={styles.loginLabel}>Sign in</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/auth/role')} style={styles.joinButton}>
+            <Pressable accessibilityRole="button" onPress={() => router.push('/signup')} style={styles.joinButton}>
               <Text style={styles.joinLabel}>Join</Text>
               <MaterialCommunityIcons name="arrow-up-right" size={16} color={colors.white} />
             </Pressable>
@@ -59,7 +59,7 @@ export default function LandingExperience() {
             <Text style={styles.title}>RishiRide</Text>
             <Text style={styles.titleAccent}>Find your way through the valley.</Text>
             <Text style={styles.description}>Local journeys, starting with a clear pickup and a place to go.</Text>
-            <Pressable accessibilityRole="button" style={styles.primaryAction} onPress={() => openSignup('passenger')}>
+            <Pressable accessibilityRole="button" style={styles.primaryAction} onPress={() => openSignup()}>
               <Text style={styles.primaryActionText}>Plan a ride</Text>
               <MaterialCommunityIcons name="arrow-right" size={19} color={colors.white} />
             </Pressable>
@@ -96,7 +96,7 @@ export default function LandingExperience() {
                 accessibilityRole="button"
                 accessibilityLabel={`Choose ${place.name} as your destination`}
                 style={[styles.destinationCard, wide && styles.destinationCardWide]}
-                onPress={() => openSignup('passenger', place.name)}
+                onPress={() => openSignup(place.name)}
               >
                 <View style={styles.destinationPhotoWrap}>
                   <Image source={place.image} style={styles.destinationPhoto} contentFit="cover" transition={180} accessibilityLabel={`${place.name}, Rishikesh`} />
@@ -110,15 +110,6 @@ export default function LandingExperience() {
               </Pressable>
             ))}
           </ScrollView>
-        </View>
-
-        <View style={[styles.driverInvite, wide && styles.driverInviteWide]}>
-          <View style={styles.driverIcon}><MaterialCommunityIcons name="steering" size={21} color={colors.green} /></View>
-          <View style={styles.driverCopy}><Text style={styles.driverEyebrow}>DRIVE WITH RISHIRIDE</Text><Text style={styles.driverTitle}>Local drivers start here.</Text><Text style={styles.driverDescription}>Phone signup first. Required checks and secure document review come before activation.</Text></View>
-          <Pressable accessibilityRole="button" style={styles.driverAction} onPress={() => openSignup('driver')}>
-            <Text style={styles.driverActionText}>Driver signup</Text>
-            <MaterialCommunityIcons name="arrow-right" size={17} color={colors.green} />
-          </Pressable>
         </View>
 
         <Text style={styles.footer}>RISHIRIDE · RISHIKESH</Text>
@@ -195,14 +186,5 @@ const styles = StyleSheet.create({
   destinationCategory: { color: colors.green, fontSize: 7, fontWeight: '900', letterSpacing: 0.9 },
   destinationName: { color: colors.ink, fontSize: 12, fontWeight: '800', marginTop: 3 },
   destinationArrow: { position: 'absolute', right: 9, bottom: 17 },
-  driverInvite: { width: '92%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 18, borderBottomWidth: 1, borderColor: colors.line },
-  driverInviteWide: { width: '88%', maxWidth: 1240, minHeight: 104 },
-  driverIcon: { width: 38, height: 38, flex: 0, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: colors.pale },
-  driverCopy: { flex: 1 },
-  driverEyebrow: { color: colors.green, fontSize: 7, fontWeight: '900', letterSpacing: 0.9 },
-  driverTitle: { color: colors.ink, fontSize: 13, fontWeight: '900', marginTop: 3 },
-  driverDescription: { maxWidth: 520, color: colors.muted, fontSize: 9, lineHeight: 14, marginTop: 4 },
-  driverAction: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, borderWidth: 1, borderColor: colors.line, borderRadius: 5 },
-  driverActionText: { color: colors.green, fontSize: 9, fontWeight: '800' },
   footer: { color: colors.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.1, textAlign: 'center', paddingTop: 17 },
 });

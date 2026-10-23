@@ -20,11 +20,5 @@ export default function Index() {
   }
 
   if (!session) return <Redirect href="/landing" />;
-  return (
-    <Redirect
-      href={session.role === 'driver'
-        ? '/dashboards/Drivers/driver-dashboard'
-        : '/dashboards/passenger/passenger-dashboard'}
-    />
-  );
+  return <Redirect href="/dashboards/passenger/passenger-dashboard" />;
 }

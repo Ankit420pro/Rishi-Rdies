@@ -63,11 +63,7 @@ export default function OtpScreen() {
       }
 
       await saveAuthenticatedSession({ role, mobile, token: result.token });
-      router.replace(
-        role === 'driver'
-          ? '/dashboards/Drivers/driver-dashboard'
-          : { pathname: '/dashboards/passenger/passenger-dashboard', params: { destination: destination ?? '' } }
-      );
+      router.replace({ pathname: '/dashboards/passenger/passenger-dashboard', params: { destination: destination ?? '' } });
     } catch (error) {
       Alert.alert(
         'Verification failed',

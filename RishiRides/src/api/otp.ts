@@ -1,8 +1,8 @@
 import { resendDemoOtp, verifyDemoOtp } from './demo-auth';
 
 export type OtpResponse =
-  | { verified: false; token?: string; role?: 'passenger' | 'driver' }
-  | { verified: true; token: string; role?: 'passenger' | 'driver' };
+  | { verified: false; token?: string; role?: 'passenger' }
+  | { verified: true; token: string; role?: 'passenger' };
 
 export type OtpChallengeResponse = {
   sessionId: string;

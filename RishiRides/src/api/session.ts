@@ -28,7 +28,7 @@ export async function saveAuthenticatedSession({
   if (!token.trim()) {
     throw new Error('The authentication service did not return a session token.');
   }
-  if (role !== 'driver' && role !== 'passenger') {
+  if (role !== 'passenger') {
     throw new Error('The authentication service returned an invalid account role.');
   }
 
@@ -67,6 +67,10 @@ export async function getAuthenticatedSession(): Promise<AuthenticatedSession | 
     typeof value.mobile !== 'string'
   ) {
     throw new Error('The saved sign-in session is invalid. Please sign in again.');
+  }
+  if (value.role === 'driver') {
+    await clearAuthenticatedSession();
+    return null;
   }
   if (Platform.OS === 'web' && !value.token.startsWith('demo.')) return null;
 

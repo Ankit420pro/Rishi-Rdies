@@ -1,12 +1,12 @@
 import { startDemoSignup } from './demo-auth';
 
-import type { LoginResponse, UserRole } from './login';
+import type { LoginResponse } from './login';
 
 type SignupRequest = {
   name: string;
   email?: string;
   mobile: string;
-  role: UserRole;
+  role: 'passenger';
   preferredLanguage: 'en' | 'hi';
   termsAccepted: true;
   privacyAccepted: true;
@@ -51,7 +51,7 @@ export async function signupUser(
     !('mobile' in payload) ||
     typeof payload.mobile !== 'string' ||
     !('role' in payload) ||
-    (payload.role !== 'passenger' && payload.role !== 'driver') ||
+    payload.role !== 'passenger' ||
     !('maskedMobile' in payload) ||
     typeof payload.maskedMobile !== 'string'
   ) {

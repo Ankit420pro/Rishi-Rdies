@@ -312,7 +312,7 @@ export default function PassengerDashboard() {
           <MaterialCommunityIcons name="information-outline" size={19} color={colors.amber} />
           <Text style={styles.serviceNoteText}>
             {demoMode
-              ? 'Demo mode: requests are stored locally and can be accepted by a demo driver on this device.'
+              ? 'Demo mode: requests are stored only on this device. Driver matching is not connected.'
               : 'The configured service does not provide fare quotes or ride dispatch yet. No real request will be sent.'}
           </Text>
         </View>
@@ -338,10 +338,6 @@ export default function PassengerDashboard() {
           <Pressable accessibilityRole="button" style={styles.navItem} onPress={openRideHistory}>
             <MaterialCommunityIcons name="history" size={20} color={colors.muted} />
             <Text style={styles.navText}>Rides</Text>
-          </Pressable>
-          <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/auth/role')}>
-            <MaterialCommunityIcons name="account-search-outline" size={20} color={colors.muted} />
-            <Text style={styles.navText}>Drivers</Text>
           </Pressable>
           <Pressable accessibilityRole="button" style={styles.navItem} onPress={() => router.push('/landing')}>
             <MaterialCommunityIcons name="rickshaw" size={20} color={colors.mint} />

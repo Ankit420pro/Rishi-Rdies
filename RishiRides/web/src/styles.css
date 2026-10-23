@@ -106,14 +106,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .book-submit:hover, .account-submit:hover:not(:disabled) { background: var(--green-deep); transform: translateY(-1px); }
 .booking-fineprint { display: flex; align-items: center; gap: 7px; margin: 14px 0 0; color: var(--muted); font-size: 10px; }
 .booking-fineprint svg { color: var(--green); }
-.driver-invite { width: min(1240px, calc(100% - 64px)); min-height: 126px; margin: 0 auto; display: flex; align-items: center; gap: 17px; border-bottom: 1px solid var(--line); }
-.driver-invite-mark { width: 42px; height: 42px; flex: 0 0 42px; display: grid; place-items: center; border-radius: 8px; background: var(--green-deep); color: var(--mint); }
-.driver-invite > div:nth-child(2) { flex: 1; }
-.driver-invite .eyebrow { font-size: 8px; }
-.driver-invite h2 { margin: 4px 0 2px; color: var(--ink); font-size: 17px; }
-.driver-invite p:last-child { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
-.driver-invite-link { min-height: 42px; display: inline-flex; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid var(--line); border-radius: 6px; color: var(--green); font-size: 11px; font-weight: 800; }
-.driver-invite-link:hover { border-color: var(--green); background: white; }
 
 .discover-section { padding: 70px 0 88px; }
 .discover-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
@@ -203,10 +195,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .account-form-wrap { width: min(430px, 100%); margin: 48px auto 0; }
 .account-form-wrap h1 { margin: 12px 0 0; color: var(--ink); font-size: 34px; line-height: 1.12; }
 .account-subtitle { margin: 10px 0 22px; color: var(--muted); font-size: 13px; line-height: 1.6; }
-.role-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-.role-toggle button { min-height: 48px; display: flex; align-items: center; gap: 9px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--muted); font-size: 12px; font-weight: 700; cursor: pointer; }
-.role-toggle button.selected { border-color: var(--green); background: #eaf4ec; color: var(--green-deep); }
-.role-initial { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: #edf3ed; color: var(--green); font-size: 10px; font-weight: 900; }
 .account-form { display: flex; flex-direction: column; gap: 14px; }
 .account-form > label:not(.consent-check) { display: flex; flex-direction: column; gap: 7px; color: var(--ink); font-size: 11px; font-weight: 800; }
 .account-form input:not([type=checkbox]) { width: 100%; min-height: 46px; padding: 0 12px; border: 1px solid #cddbd2; border-radius: 5px; outline: 0; background: white; color: var(--ink); font-size: 13px; font-weight: 500; }
@@ -253,7 +241,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 
 @media (max-width: 900px) {
   .header-inner, .page-wrap, .section-marker, .booking-layout, .footer-inner { width: min(100% - 40px, 700px); }
-  .driver-invite { width: min(100% - 40px, 700px); }
   .header-inner { height: 68px; }
   .mobile-menu-button { display: flex; }
   .primary-nav { position: absolute; top: 67px; right: 20px; left: 20px; display: none; align-items: stretch; gap: 0; padding: 8px 15px 14px; border: 1px solid var(--line); border-radius: 0 0 8px 8px; background: var(--white); box-shadow: 0 18px 32px rgba(18, 62, 52, .1); }
@@ -287,9 +274,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .intro-foot { margin-top: 24px; }
   .intro-art { min-height: 280px; }
   .booking-section { padding: 28px 0 30px; }
-  .driver-invite { min-height: 0; align-items: flex-start; flex-wrap: wrap; padding: 20px 0; }
-  .driver-invite > div:nth-child(2) { min-width: calc(100% - 60px); }
-  .driver-invite-link { margin-left: 59px; }
   .section-marker { margin-bottom: 15px; }
   .booking-heading h2 { font-size: 22px; }
   .booking-fields { grid-template-columns: 1fr; }
@@ -362,15 +346,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .hero-role { min-height: 74px; display: flex; align-items: center; gap: 13px; padding: 0 14px; border: 1px solid transparent; border-radius: 18px; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
 .hero-role:hover { transform: translateY(-2px); }
 .hero-role-passenger { background: linear-gradient(105deg, #aaf5d9, #67dcb7); color: #07382e; box-shadow: 0 11px 30px rgba(73, 216, 172, .12); }
-.hero-role-driver { min-height: 68px; border-color: rgba(120, 217, 186, .15); background: rgba(255, 255, 255, .045); color: #ecfaf4; }
 .hero-role-icon { width: 46px; height: 46px; flex: 0 0 46px; display: grid; place-items: center; border-radius: 14px; background: rgba(255, 255, 255, .48); }
-.hero-role-driver .hero-role-icon { color: #72dfbd; background: rgba(89, 201, 159, .13); }
 .hero-role-copy { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
 .hero-role-copy strong { font-size: 12px; line-height: 1.3; font-weight: 900; letter-spacing: .5px; }
 .hero-role-copy small { color: rgba(11, 61, 48, .7); font-size: 10px; line-height: 1.4; }
-.hero-role-driver .hero-role-copy small { color: #9bb7ad; }
 .hero-role-arrow { width: 39px; height: 39px; flex: 0 0 39px; display: grid; place-items: center; border-radius: 50%; background: rgba(255, 255, 255, .65); }
-.hero-driver-arrow { flex: 0 0 auto; color: #71dfbd; }
 .hero-trust-row { display: flex; flex-wrap: wrap; gap: 19px; margin-top: 19px; color: #83a79a; font-size: 8px; font-weight: 800; letter-spacing: .8px; }
 .hero-trust-row span { display: inline-flex; align-items: center; gap: 6px; }
 .hero-trust-row svg { color: #6bd6b2; }
@@ -408,11 +388,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .home-page .stepper span, .home-page .vehicle-indicator strong { color: #effbf6; }
 .home-page .vehicle-icon { background: #12372b; color: #80e3bf; }
 .home-page .booking-fineprint { color: #91afa3; }
-.home-page .driver-invite { border-color: rgba(126, 231, 194, .13); }
-.home-page .driver-invite h2 { color: #effbf6; }
-.home-page .driver-invite p:last-child { color: #91afa3; }
-.home-page .driver-invite-link { border-color: rgba(126, 231, 194, .24); color: #80e3bf; }
-.home-page .driver-invite-link:hover { background: #0b2a21; }
 .home-page .discover-section { padding-right: max(32px, calc((100% - 1240px) / 2)); padding-left: max(32px, calc((100% - 1240px) / 2)); background: var(--paper); color: var(--ink); }
 .home-page .discover-head, .home-page .feature-destinations { width: min(1240px, 100%); margin-right: auto; margin-left: auto; }
 
@@ -436,7 +411,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .hero-description { margin-top: 14px; font-size: 12px; }
   .hero-actions { margin-top: 20px; }
   .hero-role { min-height: 66px; border-radius: 15px; }
-  .hero-role-driver { min-height: 62px; }
   .hero-role-icon { width: 40px; height: 40px; flex-basis: 40px; border-radius: 12px; }
   .hero-role-copy strong { font-size: 10px; }
   .hero-role-copy small { font-size: 9px; }
@@ -452,8 +426,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .hero-art-caption { margin-top: 29px; }
   .hero-art-caption strong { font-size: 26px; }
   .home-page .booking-section { padding: 28px 0 30px; }
-  .home-page .section-marker, .home-page .booking-layout, .home-page .driver-invite { width: calc(100% - 32px); }
-  .home-page .driver-invite { min-height: 0; }
+  .home-page .section-marker, .home-page .booking-layout { width: calc(100% - 32px); }
   .home-page .discover-section { padding: 48px 16px 60px; }
 }
 
@@ -488,11 +461,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .home-page .stepper span, .home-page .vehicle-indicator strong { color: var(--ink); }
 .home-page .vehicle-icon { background: #e7f1e8; color: var(--green); }
 .home-page .booking-fineprint { color: var(--muted); }
-.home-page .driver-invite { border-color: var(--line); }
-.home-page .driver-invite h2 { color: var(--ink); }
-.home-page .driver-invite p:last-child { color: var(--muted); }
-.home-page .driver-invite-link { border-color: var(--line); color: var(--green); }
-.home-page .driver-invite-link:hover { background: #fff; }
 .home-page .discover-section { background: var(--paper); color: var(--ink); }
 
 @media (max-width: 900px) {
@@ -509,7 +477,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .intro-copy { padding-right: 8px; padding-left: 8px; }
   .intro-art { min-height: 280px; }
   .home-page .booking-section { padding: 28px 0 30px; }
-  .home-page .section-marker, .home-page .booking-layout, .home-page .driver-invite { width: calc(100% - 32px); }
-  .home-page .driver-invite { min-height: 0; }
+  .home-page .section-marker, .home-page .booking-layout { width: calc(100% - 32px); }
   .home-page .discover-section { padding: 48px 16px 60px; }
 }

@@ -14,12 +14,12 @@ const requestLimit = rateLimit({ windowMs: 15 * 60 * 1000, limit: 10, standardHe
 const phoneSchema = z.string().regex(/^[0-9]{10}$/, 'Enter a valid 10-digit Indian mobile number.');
 const loginSchema = z.object({
   mobile: phoneSchema,
-  role: z.enum(['passenger', 'driver']),
+  role: z.literal('passenger'),
   name: z.string().trim().min(1).max(120).optional(),
 });
 const signupSchema = z.object({
   mobile: phoneSchema,
-  role: z.enum(['passenger', 'driver']),
+  role: z.literal('passenger'),
   name: z.string().trim().min(1).max(120),
   email: z.email().trim().toLowerCase().optional(),
   preferredLanguage: z.enum(['en', 'hi']),
@@ -61,7 +61,7 @@ authRouter.post('/login', requestLimit, async (request, response, next) => {
   if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
-    const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
+    const role = 'PASSENGER';
     const user = await prisma.user.findUnique({
       where: { phone_role: { phone: parsed.data.mobile, role } },
       select: { id: true, phone: true, role: true },
@@ -87,7 +87,7 @@ authRouter.post('/signup', requestLimit, async (request, response, next) => {
   if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
-    const role = parsed.data.role === 'driver' ? 'DRIVER' : 'PASSENGER';
+    const role = 'PASSENGER';
     const existing = await prisma.user.findUnique({
       where: { phone_role: { phone: parsed.data.mobile, role } },
       select: { role: true },
@@ -132,7 +132,7 @@ authRouter.post('/resend-otp', requestLimit, async (request, response, next) => 
   if (!config.otpDeliveryConfigured) return response.status(503).json({ error: { code: 'OTP_DELIVERY_UNAVAILABLE', message: 'Phone verification is not configured. No OTP was sent.' } });
 
   try {
-    const user = await prisma.user.findFirst({ where: { phone: parsed.data.mobile, challenges: { some: { id: parsed.data.sessionId } } }, select: { id: true } });
+    const user = await prisma.user.findFirst({ where: { phone: parsed.data.mobile, role: 'PASSENGER', challenges: { some: { id: parsed.data.sessionId } } }, select: { id: true } });
     if (!user) return response.status(404).json({ error: { code: 'SESSION_NOT_FOUND', message: 'The verification session was not found.' } });
     const result = await issueOtp(user.id, parsed.data.mobile);
     const challenge = await prisma.otpChallenge.findFirstOrThrow({ where: { userId: user.id, consumedAt: null }, orderBy: { createdAt: 'desc' }, select: { id: true } });
@@ -154,7 +154,7 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
         where: { id: parsed.data.sessionId, user: { phone: parsed.data.mobile } },
         include: { user: true },
       });
-      if (!challenge || !isOtpUsable(challenge)) return { kind: 'invalid' as const };
+      if (!challenge || challenge.user.role !== 'PASSENGER' || !isOtpUsable(challenge)) return { kind: 'invalid' as const };
 
       const matches = config.developmentOtpEnabled
         ? parsed.data.otp === DEVELOPMENT_OTP && otpMatches(DEVELOPMENT_OTP, challenge.codeHash)
@@ -181,7 +181,7 @@ authRouter.post('/verify-otp', requestLimit, async (request, response, next) => 
 
       const user = await transaction.user.update({
         where: { id: challenge.userId },
-        data: { status: challenge.user.role === 'DRIVER' ? 'PENDING_VERIFICATION' : 'ACTIVE' },
+        data: { status: 'ACTIVE' },
         select: { id: true, role: true, status: true },
       });
       return { kind: 'verified' as const, user };

@@ -1,6 +1,6 @@
 # RishiRides
 
-RishiRides is a mobile-first Expo app and API starter for local rides in Rishikesh. Account signup and phone verification are implemented; driver document storage/review, maps, payments and ride dispatch are not live features yet.
+RishiRides is a mobile-first Expo app and API starter for local rides in Rishikesh. Passenger signup and phone verification are implemented. Driver access is not available in this app; driver details will be integrated from the branch app through an API when that endpoint is provided.
 
 ## Requirements
 
@@ -27,7 +27,7 @@ npm run web
 
 ## Local demo mode
 
-When `EXPO_PUBLIC_API_URL` is unset, the app uses a local demo service and does not need PostgreSQL or the API server. Sign up separately as passenger and driver (the same mobile number can be used for both roles), then enter the displayed local demo OTP `1234`. Demo accounts, sessions, and ride requests are stored on the current browser/device only. Passenger bookings can be accepted and progressed by a driver signed in on that same browser/device. Demo trips, fares, and earnings are illustrative only; no real dispatch, tracking, payment, or message occurs. Clear the app/browser storage to remove demo accounts.
+When `EXPO_PUBLIC_API_URL` is unset, the app uses a local passenger demo service and does not need PostgreSQL or the API server. Sign up as a passenger, then enter the displayed local demo OTP `1234`. Demo accounts, sessions, and ride requests are stored on the current browser/device only. Demo trips and fares are illustrative only; no real dispatch, tracking, payment, or message occurs. Clear the app/browser storage to remove demo accounts.
 
 When `EXPO_PUBLIC_API_URL` is set, authentication uses the configured API instead of local demo mode. The ride dispatch API is not implemented yet, so booking remains unavailable as a real trip.
 
@@ -43,14 +43,14 @@ npm run prisma:deploy
 npm run dev
 ```
 
-Passenger and driver profiles are separate role accounts. The same mobile number may have one account for each role; login and signup always use the selected role. Existing databases must apply the `20261022130000_role_scoped_phone` migration with `npm run prisma:deploy` before this behavior is available.
+Passenger signup/login is the only account flow currently exposed by the app and API. The database retains its driver role for future integration, but public auth endpoints reject driver login and signup. Driver details are expected from the branch app API once its contract is available.
 
 ## Configuration
 
 `EXPO_PUBLIC_API_URL` is the base URL used by the login, signup and OTP clients. The included API implements:
 
-- `POST /auth/login` for existing accounts with `{ mobile, role }`.
-- `POST /auth/signup` with `{ name, mobile, role, preferredLanguage, termsAccepted, privacyAccepted, email? }`. Email is optional and stored when provided.
+- `POST /auth/login` for passenger accounts with `{ mobile, role: "passenger" }`.
+- `POST /auth/signup` with `{ name, mobile, role: "passenger", preferredLanguage, termsAccepted, privacyAccepted, email? }`. Email is optional and stored when provided.
 - `POST /auth/verify-otp` with `{ sessionId, mobile, otp }`, returning `{ verified: true, token }` on success.
 - `POST /auth/resend-otp` with `{ sessionId, mobile }`.
 
@@ -69,12 +69,12 @@ npm test
 
 | Area | Status |
 | --- | --- |
-| Landing and role-specific signup navigation | Implemented |
+| Landing and passenger signup navigation | Implemented |
 | Passenger account signup | Name, mobile, preferred language and required policy consent are stored server-side |
 | OTP authentication | Development simulator or Twilio Verify; no production OTP is generated or exposed by the client |
 | Native session persistence | Verified session token is stored using Expo SecureStore |
-| Driver onboarding | Four-stage requirements and status gate shown; application intake, private uploads and admin approval are not configured, so drivers remain unable to go online |
-| Dashboard role routing | Client routes require a SecureStore session with the matching role; API authorization is still required |
+| Driver login, signup, onboarding and dashboard | Removed; driver details will come from the branch app API when available |
+| Passenger dashboard routing | Client routes require a SecureStore passenger session; API authorization is still required |
 | Passenger pickup entry, foreground location request, destination suggestions and group-size vehicle choice | Client UI and local validation implemented |
 | Fare quotes, ride creation, driver matching, job dispatch and lifecycle | Not implemented; no API exists in this repository |
 | Passenger profile, saved places, emergency contacts, payments, ratings and completed-ride OTP | Not implemented |
