@@ -1,3 +1,4 @@
 {
-  "git.openAfterSync": "never"
+  "git.openAfterSync": "never",
+  "git.autofetch": false
 }
