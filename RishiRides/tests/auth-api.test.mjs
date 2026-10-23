@@ -46,16 +46,23 @@ test('OTP verification requires a token for a verified session', async () => {
   }
 });
 
-test('OTP verification returns the role confirmed by the server', async () => {
+test('OTP verification accepts passenger role and rejects driver role', async () => {
+  let role = 'passenger';
   globalThis.fetch = async () => ({
     ok: true,
-    json: async () => ({ verified: true, token: 'signed-token', role: 'driver' }),
+    json: async () => ({ verified: true, token: 'signed-token', role }),
   });
 
   try {
     assert.deepEqual(
       await verifyOtp({ sessionId: 'session', mobile: '9876543210', otp: '123456' }),
-      { verified: true, token: 'signed-token', role: 'driver' }
+      { verified: true, token: 'signed-token', role: 'passenger' }
+    );
+
+    role = 'driver';
+    await assert.rejects(
+      verifyOtp({ sessionId: 'session', mobile: '9876543210', otp: '123456' }),
+      /invalid verification response/
     );
   } finally {
     globalThis.fetch = originalFetch;
