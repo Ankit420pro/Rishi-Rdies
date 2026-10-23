@@ -8,6 +8,9 @@ export type DemoRide = {
   id: string;
   passengerMobile: string;
   driverMobile?: string;
+  driverName?: string;
+  driverRating?: number;
+  driverLocation?: { latitude: number; longitude: number };
   pickup: string;
   destination: string;
   vehicle: string;
@@ -50,7 +53,15 @@ export async function createDemoRide(input: Omit<DemoRide, 'id' | 'status' | 'cr
   return ride;
 }
 
-export async function acceptDemoRide(rideId: string, driverMobile: string): Promise<DemoRide> {
+export async function acceptDemoRide(
+  rideId: string,
+  driverMobile: string,
+  driver?: {
+    name?: string;
+    rating?: number;
+    location?: { latitude: number; longitude: number };
+  },
+): Promise<DemoRide> {
   const rides = await readRides();
   if (rides.some((ride) => ride.driverMobile === driverMobile && ['accepted', 'driver_arriving', 'in_progress'].includes(ride.status))) {
     throw new Error('Finish your active demo trip before accepting another request.');
@@ -58,6 +69,9 @@ export async function acceptDemoRide(rideId: string, driverMobile: string): Prom
   const ride = rides.find((entry) => entry.id === rideId);
   if (!ride || ride.status !== 'requested') throw new Error('This demo request is no longer available.');
   ride.driverMobile = driverMobile;
+  ride.driverName = driver?.name;
+  ride.driverRating = driver?.rating;
+  ride.driverLocation = driver?.location;
   ride.status = 'accepted';
   ride.updatedAt = Date.now();
   await saveRides(rides);

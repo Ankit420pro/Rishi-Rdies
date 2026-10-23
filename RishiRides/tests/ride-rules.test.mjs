@@ -1,10 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  calculateAutoFare,
   distanceInKilometres,
   eligibleDrivers,
   vehicleForPassengerCount,
 } from '../src/domain/ride-rules.ts';
+
+test('auto fare is 10 rupees per kilometre plus 10 per passenger', () => {
+  assert.equal(calculateAutoFare(4.2, 1), 52);
+  assert.equal(calculateAutoFare(4.2, 3), 72);
+  assert.equal(calculateAutoFare(0, 2), 20);
+  assert.throws(() => calculateAutoFare(-1, 1), RangeError);
+  assert.throws(() => calculateAutoFare(4.2, 0), RangeError);
+});
 
 test('vehicle selection follows the passenger capacity threshold', () => {
   assert.equal(vehicleForPassengerCount(3), 'E-rickshaw');

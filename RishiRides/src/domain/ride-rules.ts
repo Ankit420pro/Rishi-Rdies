@@ -11,6 +11,17 @@ export type DriverCandidate = {
   location: Coordinates;
 };
 
+export function calculateAutoFare(distanceKm: number, passengerCount: number): number {
+  if (!Number.isFinite(distanceKm) || distanceKm < 0) {
+    throw new RangeError('Distance must be a non-negative number.');
+  }
+  if (!Number.isInteger(passengerCount) || passengerCount < 1) {
+    throw new RangeError('Passenger count must be a positive whole number.');
+  }
+
+  return Math.round(distanceKm * 10 + passengerCount * 10);
+}
+
 export function vehicleForPassengerCount(passengerCount: number): VehicleType {
   if (!Number.isInteger(passengerCount) || passengerCount < 1) {
     throw new RangeError('Passenger count must be a positive whole number.');

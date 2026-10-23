@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import RishikeshMapPreview from '../../../components/rishikesh-map-preview';
 import { createDemoRide, getDemoRides, updateDemoRideStatus, type DemoRide } from '../../../api/demo-rides';
 import { getAuthenticatedSession } from '../../../api/session';
+import { calculateAutoFare } from '../../../domain/ride-rules';
 
 const demoMode = !process.env.EXPO_PUBLIC_API_URL;
 
@@ -31,11 +32,12 @@ const destinations = [
 
 const rideOptions = [
   { name: 'Bike', icon: 'motorbike' as const, fare: 65, eta: '3 min' },
-  { name: 'Auto', icon: 'rickshaw' as const, fare: 110, eta: '5 min' },
+  { name: 'Auto', icon: 'rickshaw' as const, fare: 20, eta: '5 min' },
   { name: 'Mini', icon: 'car-hatchback' as const, fare: 165, eta: '7 min' },
   { name: 'Sedan', icon: 'car-side' as const, fare: 220, eta: '8 min' },
   { name: 'SUV', icon: 'car-estate' as const, fare: 310, eta: '10 min' },
 ];
+const estimatedDistanceKm = 4.2;
 
 export default function PassengerDashboard() {
   const router = useRouter();
@@ -54,6 +56,9 @@ export default function PassengerDashboard() {
   const [passengerMobile, setPassengerMobile] = useState('');
 
   const ride = rideOptions.find((option) => option.name === selectedRide) ?? rideOptions[1];
+  const estimatedFare = selectedRide === 'Auto'
+    ? calculateAutoFare(estimatedDistanceKm, passengerCount)
+    : ride.fare;
 
   useEffect(() => {
     let active = true;
@@ -66,6 +71,13 @@ export default function PassengerDashboard() {
         const passengerRides = rides.filter((item) => item.passengerMobile === session.mobile);
         setRideHistory(passengerRides);
         setDemoRide(passengerRides[0] ?? null);
+        const acceptedRide = passengerRides.find((item) => item.status === 'accepted' && item.driverMobile);
+        if (acceptedRide) {
+          router.replace({
+            pathname: '/dashboards/passenger/ride-tracking',
+            params: { rideId: acceptedRide.id },
+          });
+        }
       }
     };
     void refresh();
@@ -136,7 +148,7 @@ export default function PassengerDashboard() {
         pickup: pickup.trim(),
         destination: destination.trim(),
         vehicle: ride.name,
-        estimate: ride.fare,
+        estimate: estimatedFare,
       });
       setDemoRide(created);
       setRideHistory((rides) => [created, ...rides]);
@@ -271,7 +283,7 @@ export default function PassengerDashboard() {
               >
                 <MaterialCommunityIcons name={option.icon} size={23} color={selectedRide === option.name ? colors.green : colors.muted} />
                 <Text style={[styles.rideName, selectedRide === option.name && styles.rideNameSelected]}>{option.name}</Text>
-                <Text style={styles.rideFare}>₹{option.fare}</Text>
+                <Text style={styles.rideFare}>₹{option.name === 'Auto' ? estimatedFare : option.fare}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -283,11 +295,15 @@ export default function PassengerDashboard() {
             </View>
             <View style={styles.estimateMetric}>
               <MaterialCommunityIcons name="map-marker-distance" size={16} color={colors.green} />
-              <Text style={styles.estimateText}>~4.2 km</Text>
+              <Text style={styles.estimateText}>~{estimatedDistanceKm} km</Text>
             </View>
-            <Text style={styles.estimateFare}>₹{ride.fare}</Text>
+            <Text style={styles.estimateFare}>₹{estimatedFare}</Text>
           </View>
-          <Text style={styles.estimateDisclaimer}>Illustrative estimate only. Final route and fare are not available in demo mode.</Text>
+          <Text style={styles.estimateDisclaimer}>
+            {selectedRide === 'Auto'
+              ? 'Auto fare: ₹10/km + ₹10 per passenger. Distance is an estimate.'
+              : 'Illustrative estimate only. Final route and fare are not available in demo mode.'}
+          </Text>
 
           <Pressable accessibilityRole="button" style={styles.bookButton} onPress={() => void submitBooking()}>
             <Text style={styles.bookButtonText}>{demoMode ? 'Request demo ride' : 'Find a ride'}</Text>
